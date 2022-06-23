@@ -1,0 +1,16 @@
+[
+  {
+    "type": "readers.las"
+  },
+  {
+    "type": "filters.hag_nn",
+    "count": 100
+  },
+  {
+    "type": "filters.range",
+    "limits": "HeightAboveGround[:3]"
+  },
+  {
+    "type": "writers.las"
+  }
+]
