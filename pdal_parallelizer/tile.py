@@ -5,16 +5,17 @@ import json
 
 
 class Tile:
-    def __init__(self, filename, output_dir):
+    def __init__(self, filename, output_dir, json_pipeline):
         self.filename = filename
         self.output_dir = output_dir
+        self.json_pipeline = json_pipeline
 
     def pipeline(self):
         name = uuid.uuid4()
         output_dir = self.output_dir
         output_filename = f'{output_dir}/{name}.las'
 
-        with open("pipeline.json", 'r') as pipeline:
+        with open(self.json_pipeline, 'r') as pipeline:
             p = json.load(pipeline)
             reader = list(filter(lambda x: x['type'] == 'readers.las', p))
             writer = list(filter(lambda x: x['type'] == 'writers.las', p))
