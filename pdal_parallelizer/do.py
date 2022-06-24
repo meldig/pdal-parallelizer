@@ -6,7 +6,7 @@ import asyncio
 
 
 @dask.delayed
-async def process(pipeline, temp_dir):
+def process(pipeline, temp_dir):
     temp_file = temp_dir + '/' + str(pipeline[1]) + '.pickle'
     pipeline[0].execute()
     try:

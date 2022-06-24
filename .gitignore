@@ -1,5 +1,6 @@
 pdal_parallelizer/config_dev.json
 pdal_parallelizer/config.json
+pdal_parallelizer/pipeline.json
 pdal_parallelizer/temp
 build
 dask-worker-space
