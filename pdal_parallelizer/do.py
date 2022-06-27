@@ -1,8 +1,7 @@
 import dask
-from . import tile
+import tile
 import pickle
 import os
-import asyncio
 
 
 @dask.delayed
@@ -11,7 +10,7 @@ def process(pipeline, temp_dir):
     pipeline[0].execute()
     try:
         os.remove(temp_file)
-        print('File ' + temp_file + 'suppressed.')
+        print('File ' + temp_file + ' suppressed.')
     except FileNotFoundError:
         print('File ' + temp_dir + '/' + str(pipeline[1]) + '.pickle' + ' not found.')
 

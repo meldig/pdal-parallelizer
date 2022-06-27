@@ -4,8 +4,8 @@ import click
 import dask
 from dask.distributed import Client
 from os import listdir
-from . import do
-from . import base
+import do
+import base
 
 
 @click.group()
@@ -33,10 +33,9 @@ def process_pipelines(**kwargs):
         files = base.getFiles(config.get('directories').get('input_dir'))
         delayed = do.processPipelines(output_dir=output_dir, temp_dir=temp_dir, json_pipeline=config.get('pipeline'), files=files)
 
-    client = Client(n_workers=2, threads_per_worker=1)
+    client = Client(n_workers=2, threads_per_worker=1, asynchronous=True)
     click.echo('Parallelization started.\n')
     dask.compute(*delayed)
-    print('allo')
     click.echo('Job just finished.\n')
 
 
