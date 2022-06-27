@@ -1,6 +1,0 @@
-{
-  "directories": {
-    "input_dir": "The folder that contains your input files ",
-    "output_dir": "The folder that will receive your output files"
-  }
-}

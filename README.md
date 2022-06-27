@@ -5,20 +5,20 @@ A simple commandline app for parallelize your pdal treatments on point clouds
 # Installation
 ## Using Pip
 ```bash
-  $ pip install pdal_parallelizer
+  $ pip install pdal-parallelizer
 ```
 ## Manual
 ```bash
-  $ git clone https://github.com/meldig/mel-parallelizer
-  $ cd pdal_parallelizer
+  $ git clone https://github.com/meldig/pdal-parallelizer
+  $ cd pdal-parallelizer
   $ python setup.py install
 ```
 # Usage
 ```bash
-$ mel-parallelizer
+$ pdal-parallelizer
 ```
 ## Processing pipelines
-`process-pipelines <config file>`
+`process-pipelines <config file> <n_workers> <threads_per_worker>`
 ```bash
-$ pdal_parallelizer process_pipelines config.json
+$ pdal-parallelizer process-pipelines config.json 3 1
 ```

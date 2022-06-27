@@ -1,5 +1,5 @@
 import dask
-import tile
+from . import tile
 import pickle
 import os
 
@@ -12,15 +12,14 @@ def process(pipeline, temp_dir):
         os.remove(temp_file)
         print('File ' + temp_file + ' suppressed.')
     except FileNotFoundError:
-        print('File ' + temp_dir + '/' + str(pipeline[1]) + '.pickle' + ' not found.')
+        print('File ' + temp_file + ' not found.')
 
 
 def processPipelines(output_dir, temp_dir, json_pipeline, files=None, pipelines=None):
     delayedPipelines = []
     if pipelines:
         for p in pipelines:
-            temp_file = temp_dir + '/' + str(p[1]) + '.pickle'
-            delayedPipelines.append(dask.delayed(process)(p, temp_file))
+            delayedPipelines.append(dask.delayed(process)(p, temp_dir))
     else:
         tiles = []
         for file in files:
