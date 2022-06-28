@@ -21,6 +21,21 @@ $ pdal-parallelizer
 ### Processing pipelines
 `process-pipelines <config file> <n_workers> <threads_per_worker>`
 
+#### Config file
+
+Your configuration file must be like that : 
+
+```json
+{
+    "directories": {
+        "input_dir": "The folder that contains your input files",
+        "output_dir": "The folder that will receive your output files",
+        "temp_dir": "The folder that will contains your temporary files"
+    }
+    "pipeline": "Your pipeline path"
+}
+```
+
 #### Options
 
 - -c (--config) : path of your config file.
