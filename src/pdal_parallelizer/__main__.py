@@ -5,8 +5,8 @@ import dask
 from dask import config as cfg
 from dask.distributed import Client
 from os import listdir
-from . import do
-from . import base
+import do
+import base
 
 
 @click.group()
@@ -17,9 +17,9 @@ def main():
 
 
 @main.command()
-@click.argument('config', required=True)
-@click.argument('n_workers', required=True)
-@click.argument('threads_per_worker', required=True)
+@click.option('-c', '--config', required=True, type=click.Path(exists=True))
+@click.option('-nw', '--n_workers', required=False, type=int, default=3)
+@click.option('-tpw', '--threads_per_worker', required=False, type=int, default=1)
 def process_pipelines(**kwargs):
     """Processing pipelines on many points cloud in parallel"""
     with open(kwargs.get('config'), 'r') as c:
@@ -37,7 +37,7 @@ def process_pipelines(**kwargs):
         delayed = do.processPipelines(output_dir=output_dir, temp_dir=temp_dir, json_pipeline=config.get('pipeline'), files=files)
 
     cfg.set({'interface': 'lo'})
-    client = Client(n_workers=int(kwargs.get('n_workers')), threads_per_worker=int(kwargs.get('threads_per_worker')))
+    client = Client(n_workers=kwargs.get('nw'), threads_per_worker=kwargs.get('tpw'))
     click.echo('Parallelization started.\n')
     dask.compute(*delayed)
     click.echo('Job just finished.\n')

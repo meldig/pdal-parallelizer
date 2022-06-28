@@ -1,5 +1,5 @@
 import dask
-from . import tile
+import tile
 import pickle
 import os
 
