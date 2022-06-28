@@ -31,7 +31,7 @@ Your configuration file must be like that :
         "input_dir": "The folder that contains your input files",
         "output_dir": "The folder that will receive your output files",
         "temp_dir": "The folder that will contains your temporary files"
-    }
+    },
     "pipeline": "Your pipeline path"
 }
 ```
