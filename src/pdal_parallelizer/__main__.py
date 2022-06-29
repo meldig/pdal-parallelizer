@@ -10,7 +10,7 @@ from . import base
 
 
 @click.group()
-@click.version_option('0.3.5')
+@click.version_option('0.4.9')
 def main():
     """A simple parallelization tool for 3d point clouds treatment"""
     pass
@@ -28,7 +28,7 @@ def process_pipelines(**kwargs):
     output_dir = config.get('directories').get('output_dir')
     temp_dir = config.get('directories').get('temp_dir')
     if len(listdir(temp_dir)) != 0:
-        click.echo('Something went wrong during previous execution, there is some temp files in your temp directory.\n Beginning of the execution.n')
+        click.echo('Something went wrong during previous execution, there is some temp files in your temp directory.\n Beginning of the execution\n')
         pipelines = base.getSerializedPipelines(temp_dir)
         delayed = do.processPipelines(output_dir=output_dir, temp_dir=temp_dir, json_pipeline=config.get('pipeline'), pipelines=pipelines)
     else:
@@ -37,6 +37,7 @@ def process_pipelines(**kwargs):
         delayed = do.processPipelines(output_dir=output_dir, temp_dir=temp_dir, json_pipeline=config.get('pipeline'), files=files)
 
     cfg.set({'interface': 'lo'})
+    cfg.set({'distributed.scheduler.worker-ttl': ''})
     client = Client(n_workers=kwargs.get('nw'), threads_per_worker=kwargs.get('tpw'))
     click.echo('Parallelization started.\n')
     dask.compute(*delayed)

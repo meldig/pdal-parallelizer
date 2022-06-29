@@ -10,9 +10,8 @@ def process(pipeline, temp_dir):
     pipeline[0].execute()
     try:
         os.remove(temp_file)
-        print('File ' + temp_file + ' suppressed.')
     except FileNotFoundError:
-        print('File ' + temp_file + ' not found.')
+        print('Trying to supress ' + temp_dir + temp_file + ' but cannot found this file.')
 
 
 def processPipelines(output_dir, temp_dir, json_pipeline, files=None, pipelines=None):
