@@ -5,12 +5,12 @@ import dask
 from dask import config as cfg
 from dask.distributed import Client
 from os import listdir
-import do
-import base
+from . import do
+from . import base
 
 
 @click.group()
-@click.version_option('0.3.2')
+@click.version_option('0.3.5')
 def main():
     """A simple parallelization tool for 3d point clouds treatment"""
     pass
