@@ -1,19 +1,20 @@
 import sys
-import uuid
 import pdal
 import json
+import os
 
 
 class Tile:
-    def __init__(self, filename, output_dir, json_pipeline):
-        self.filename = filename
+    def __init__(self, filepath, output_dir, json_pipeline):
+        self.filepath = filepath
         self.output_dir = output_dir
         self.json_pipeline = json_pipeline
 
     def pipeline(self):
-        name = uuid.uuid4()
+        filename = os.path.basename(self.filepath).split('.')[0]
+        name = 'temp__' + filename
         output_dir = self.output_dir
-        output_filename = f'{output_dir}/{name}.las'
+        output_filename = f'{output_dir}/{filename}.las'
 
         with open(self.json_pipeline, 'r') as pipeline:
             p = json.load(pipeline)
@@ -25,7 +26,7 @@ class Tile:
             elif not writer:
                 sys.exit("Please add a writer to your pipeline.")
 
-            reader[0]['filename'] = self.filename
+            reader[0]['filename'] = self.filepath
             writer[0]['filename'] = output_filename
 
             p = pdal.Pipeline(json.dumps(p))
@@ -33,4 +34,4 @@ class Tile:
         return p, name
 
     def __str__(self):
-        return f'{self.filename}'
+        return f'{self.filepath}'

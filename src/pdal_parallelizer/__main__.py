@@ -10,16 +10,16 @@ from . import base
 
 
 @click.group()
-@click.version_option('0.3.2')
+@click.version_option('0.4.9')
 def main():
     """A simple parallelization tool for 3d point clouds treatment"""
     pass
 
 
 @main.command()
-@click.argument('config', required=True)
-@click.argument('n_workers', required=True)
-@click.argument('threads_per_worker', required=True)
+@click.option('-c', '--config', required=True, type=click.Path(exists=True))
+@click.option('-nw', '--n_workers', required=False, type=int, default=3)
+@click.option('-tpw', '--threads_per_worker', required=False, type=int, default=1)
 def process_pipelines(**kwargs):
     """Processing pipelines on many points cloud in parallel"""
     with open(kwargs.get('config'), 'r') as c:
@@ -28,7 +28,7 @@ def process_pipelines(**kwargs):
     output_dir = config.get('directories').get('output_dir')
     temp_dir = config.get('directories').get('temp_dir')
     if len(listdir(temp_dir)) != 0:
-        click.echo('Something went wrong during previous execution, there is some temp files in your temp directory.\n Beginning of the execution.n')
+        click.echo('Something went wrong during previous execution, there is some temp files in your temp directory.\n Beginning of the execution\n')
         pipelines = base.getSerializedPipelines(temp_dir)
         delayed = do.processPipelines(output_dir=output_dir, temp_dir=temp_dir, json_pipeline=config.get('pipeline'), pipelines=pipelines)
     else:
@@ -37,7 +37,8 @@ def process_pipelines(**kwargs):
         delayed = do.processPipelines(output_dir=output_dir, temp_dir=temp_dir, json_pipeline=config.get('pipeline'), files=files)
 
     cfg.set({'interface': 'lo'})
-    client = Client(n_workers=int(kwargs.get('n_workers')), threads_per_worker=int(kwargs.get('threads_per_worker')))
+    cfg.set({'distributed.scheduler.worker-ttl': ''})
+    client = Client(n_workers=kwargs.get('nw'), threads_per_worker=kwargs.get('tpw'))
     click.echo('Parallelization started.\n')
     dask.compute(*delayed)
     click.echo('Job just finished.\n')
