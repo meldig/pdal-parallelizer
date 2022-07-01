@@ -1,6 +1,6 @@
 # PDAL-PARALLELIZER
 
-A simple commandline app for parallelize your pdal treatments on point clouds
+A simple commandline app to parallelize your pdal pipelines on point clouds
 
 # Installation
 ### Using Pip

@@ -1,4 +1,5 @@
 import dask
+from dask.distributed import Lock
 from . import tile
 import pickle
 import os
@@ -6,7 +7,8 @@ import os
 
 @dask.delayed
 def process(pipeline, temp_dir):
-    temp_file = temp_dir + '/' + str(pipeline[1]) + '.pickle'
+    with Lock(str(pipeline[1])):
+        temp_file = temp_dir + '/' + str(pipeline[1]) + '.pickle'
     pipeline[0].execute()
     try:
         os.remove(temp_file)

@@ -3,14 +3,14 @@ import sys
 import click
 import dask
 from dask import config as cfg
-from dask.distributed import Client
+from dask.distributed import LocalCluster, Client
 from os import listdir
 from . import do
 from . import base
 
 
 @click.group()
-@click.version_option('0.4.9')
+@click.version_option('0.5.2')
 def main():
     """A simple parallelization tool for 3d point clouds treatment"""
     pass
@@ -37,8 +37,10 @@ def process_pipelines(**kwargs):
         delayed = do.processPipelines(output_dir=output_dir, temp_dir=temp_dir, json_pipeline=config.get('pipeline'), files=files)
 
     cfg.set({'interface': 'lo'})
-    cfg.set({'distributed.scheduler.worker-ttl': ''})
-    client = Client(n_workers=kwargs.get('nw'), threads_per_worker=kwargs.get('tpw'))
+    cfg.set({'distributed.scheduler.worker-ttl': None})
+    cfg.set({'distributed.comm.timeouts.connect': '500s'})
+    cluster = LocalCluster(n_workers=kwargs.get('nw'), threads_per_worker=kwargs.get('tpw'))
+    client = Client(cluster)
     click.echo('Parallelization started.\n')
     dask.compute(*delayed)
     click.echo('Job just finished.\n')
