@@ -41,6 +41,28 @@ Your configuration file must be like that :
 - -c (--config) : path of your config file.
 - -nw (--n_workers) : number of cores you want for processing [default=3]
 - -tpw (--threads_per_worker) : number of threads for each worker [default=1]
+- -dr (--dry_run) : number of files to execute the test
+
+###### Dry run
+
+Dry runs are test executions that allows the user to check if it's parameters are good or not.
+These dry runs are executed on a subassembly of your input files. You can use it like that :
+
+```bash
+$ pdal-parallelizer ... -dr 5
+```
+
+With this command, pdal-parallelizer will take the 5 biggest files of your input directory and test your parameters on it.
+So you will see if the execution is too slow (if it's the case, you can increase the -nw option) and especially if your
+timeout value is high enough.
+
+If everything is good, you can lauch your treatment on your whole input directory (i.e. without specifying -dr option). If not, you can execute a new dry run with other options.
+
+**Advice :** If your dry run is infinite, it's probably because your workers are down. Try to increase the timeout value and re-test.
+
+**PS :** Dry runs or just **test** executions, so it's not serializing your pipelines. Do not launch a dry run on your entire directory, if there is something wrong during it all your pipelines will have to be re-run, even those that have passed. 
+
+#### Exemple
 
 ```bash
 $ pdal-parallelizer process-pipelines -c config.json -nw 3 -tpw 1
