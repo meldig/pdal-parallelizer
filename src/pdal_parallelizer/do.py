@@ -1,6 +1,6 @@
 import dask
 from dask.distributed import Lock
-import tile
+from . import tile
 import pickle
 import os
 
