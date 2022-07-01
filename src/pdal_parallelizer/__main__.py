@@ -5,8 +5,8 @@ import dask
 from dask import config as cfg
 from dask.distributed import LocalCluster, Client
 from os import listdir
-from . import do
-from . import base
+import do
+import base
 
 
 @click.group()
@@ -20,6 +20,7 @@ def main():
 @click.option('-c', '--config', required=True, type=click.Path(exists=True))
 @click.option('-nw', '--n_workers', required=False, type=int, default=3)
 @click.option('-tpw', '--threads_per_worker', required=False, type=int, default=1)
+@click.option('-dr', '--dry_run', required=False, type=int)
 def process_pipelines(**kwargs):
     """Processing pipelines on many points cloud in parallel"""
     with open(kwargs.get('config'), 'r') as c:
@@ -33,14 +34,18 @@ def process_pipelines(**kwargs):
         delayed = do.processPipelines(output_dir=output_dir, temp_dir=temp_dir, json_pipeline=config.get('pipeline'), pipelines=pipelines)
     else:
         click.echo('Beginning of the execution\n')
-        files = base.getFiles(config.get('directories').get('input_dir'))
-        delayed = do.processPipelines(output_dir=output_dir, temp_dir=temp_dir, json_pipeline=config.get('pipeline'), files=files)
+        if not kwargs.get('dry_run'):
+            files = base.getFiles(config.get('directories').get('input_dir'))
+            delayed = do.processPipelines(output_dir=output_dir, json_pipeline=config.get('pipeline'), temp_dir=temp_dir, files=files)
+        else:
+            files = base.getFiles(config.get('directories').get('input_dir'), nFiles=kwargs.get('dry_run'))
+            delayed = do.processPipelines(output_dir=output_dir, json_pipeline=config.get('pipeline'), files=files, dry_run=kwargs.get('dry_run'))
 
     cfg.set({'interface': 'lo'})
     cfg.set({'distributed.scheduler.worker-ttl': None})
-    cfg.set({'distributed.comm.timeouts.connect': '500s'})
-    cluster = LocalCluster(n_workers=kwargs.get('nw'), threads_per_worker=kwargs.get('tpw'))
-    client = Client(cluster)
+    # cfg.set({'distributed.comm.timeouts.connect': '500s'})
+    cluster = LocalCluster(n_workers=kwargs.get('n_workers'), threads_per_worker=kwargs.get('threads_per_worker'), silence_logs=False)
+    Client(cluster)
     click.echo('Parallelization started.\n')
     dask.compute(*delayed)
     click.echo('Job just finished.\n')
