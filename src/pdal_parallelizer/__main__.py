@@ -43,7 +43,7 @@ def process_pipelines(**kwargs):
 
     cfg.set({'interface': 'lo'})
     cfg.set({'distributed.scheduler.worker-ttl': None})
-    # cfg.set({'distributed.comm.timeouts.connect': '500s'})
+    cfg.set({'distributed.comm.timeouts.connect': '500s'})
     cluster = LocalCluster(n_workers=kwargs.get('n_workers'), threads_per_worker=kwargs.get('threads_per_worker'), silence_logs=False)
     Client(cluster)
     click.echo('Parallelization started.\n')
