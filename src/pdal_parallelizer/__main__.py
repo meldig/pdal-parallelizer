@@ -4,13 +4,15 @@ import click
 import dask
 from dask import config as cfg
 from dask.distributed import LocalCluster, Client
+from distributed.diagnostics import MemorySampler
 from os import listdir
 from . import do
 from . import base
+from matplotlib import pyplot as plt
 
 
 @click.group()
-@click.version_option('0.6.2')
+@click.version_option('0.7.2')
 def main():
     """A simple parallelization tool for 3d point clouds treatment"""
     pass
@@ -47,9 +49,15 @@ def process_pipelines(**kwargs):
     cfg.set({'distributed.scheduler.worker-ttl': None})
     cfg.set({'distributed.comm.timeouts.connect': timeout})
     cluster = LocalCluster(n_workers=kwargs.get('n_workers'), threads_per_worker=kwargs.get('threads_per_worker'))
-    Client(cluster)
+    client = Client(cluster)
+    ms = MemorySampler()
     click.echo('Parallelization started.\n')
-    dask.compute(*delayed)
+    with ms.sample(label='execution', client=client):
+        dask.compute(*delayed)
+
+    ms.plot()
+    plt.savefig(config.get('directories').get('output_dir') + 'memory-usage.png')
+
     click.echo('Job just finished.\n')
 
 
