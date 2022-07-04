@@ -42,6 +42,7 @@ Your configuration file must be like that :
 - -nw (--n_workers) : number of cores you want for processing [default=3]
 - -tpw (--threads_per_worker) : number of threads for each worker [default=1]
 - -dr (--dry_run) : number of files to execute the test
+- -d (--diagnostic) : get a graph of the memory usage during the execution
 
 ###### Dry run
 
@@ -64,7 +65,7 @@ If everything is good, you can lauch your treatment on your whole input director
 
 ###### Diagnostic
 
-At the end of each execution, you
+At the end of each execution, you can get a graph of the memory usage. This may be interesting to analyze after a dry run. This graph will be in the output directory you specify in the config file.
 
 #### Exemple
 
