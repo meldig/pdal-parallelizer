@@ -16,7 +16,7 @@ from matplotlib import pyplot as plt
 
 
 @click.group()
-@click.version_option('0.7.3')
+@click.version_option('0.7.4')
 def main():
     """A simple parallelization tool for 3d point clouds treatment"""
     pass
@@ -60,7 +60,7 @@ def process_pipelines(**kwargs):
         dask.compute(*delayed)
 
     ms.plot()
-    plt.savefig(config.get('directories').get('output_dir') + 'memory-usage.png')
+    plt.savefig(config.get('directories').get('output_dir') + '/memory-usage.png')
 
     click.echo('Job just finished.\n')
 

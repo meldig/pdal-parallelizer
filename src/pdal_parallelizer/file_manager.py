@@ -14,7 +14,7 @@ def getFiles(input_directory, nFiles=None):
         return files
     else:
         filesSize = [(join(input_directory, f), os.path.getsize(join(input_directory, f))) for f in files]
-        filesSize.sort(key=lambda tup: tup[1], reverse=False)
+        filesSize.sort(key=lambda tup: tup[1], reverse=True)
         sortedFiles = [filesSize[i][0] for i in range(len(filesSize))]
         return sortedFiles[0:nFiles]
 
