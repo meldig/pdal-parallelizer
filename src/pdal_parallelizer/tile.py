@@ -1,3 +1,7 @@
+"""
+This is the tile class. Each file represent a tile, and for each tile we assign a pipeline written by the user
+"""
+
 import sys
 import pdal
 import json

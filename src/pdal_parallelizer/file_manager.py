@@ -1,3 +1,7 @@
+"""
+In the file_manager, we get all the files that we need for the executions. We can get all the files from the input directory, or get all the serialized pipelines of the temp directory
+"""
+
 import os.path
 import pickle
 from os import listdir

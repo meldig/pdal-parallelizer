@@ -1,3 +1,7 @@
+"""
+This is the do file. Here, we create the tiles in the createTiles function and then we execute their pipelines in the process function
+"""
+
 import dask
 from dask.distributed import Lock
 from . import tile
@@ -19,7 +23,7 @@ def process(pipeline, temp_dir=None):
         pipeline[0].execute()
 
 
-def processPipelines(output_dir, json_pipeline, temp_dir=None, files=None, pipelines=None, dry_run=False):
+def createTiles(output_dir, json_pipeline, temp_dir=None, files=None, pipelines=None, dry_run=False):
     delayedPipelines = []
     if pipelines:
         for p in pipelines:
