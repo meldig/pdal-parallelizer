@@ -16,7 +16,7 @@ from matplotlib import pyplot as plt
 
 
 @click.group()
-@click.version_option('0.7.4')
+@click.version_option('0.7.6')
 def main():
     """A simple parallelization tool for 3d point clouds treatment"""
     pass
@@ -27,6 +27,7 @@ def main():
 @click.option('-nw', '--n_workers', required=False, type=int, default=3)
 @click.option('-tpw', '--threads_per_worker', required=False, type=int, default=1)
 @click.option('-dr', '--dry_run', required=False, type=int)
+@click.option('-d', '--diagnostic', is_flag=True, required=False)
 def process_pipelines(**kwargs):
     """Processing pipelines on many points cloud in parallel"""
     with open(kwargs.get('config'), 'r') as c:
@@ -59,8 +60,9 @@ def process_pipelines(**kwargs):
     with ms.sample(label='execution', client=client):
         dask.compute(*delayed)
 
-    ms.plot()
-    plt.savefig(config.get('directories').get('output_dir') + '/memory-usage.png')
+    if kwargs.get('diagnostic'):
+        ms.plot()
+        plt.savefig(config.get('directories').get('output_dir') + '/memory-usage.png')
 
     click.echo('Job just finished.\n')
 

@@ -62,6 +62,10 @@ If everything is good, you can lauch your treatment on your whole input director
 
 **PS :** Dry runs or just **test** executions, so it's not serializing your pipelines. Do not launch a dry run on your entire directory, if there is something wrong during it all your pipelines will have to be re-run, even those that have passed. 
 
+###### Diagnostic
+
+At the end of each execution, you
+
 #### Exemple
 
 ```bash
