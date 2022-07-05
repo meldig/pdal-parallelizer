@@ -4,11 +4,7 @@ A simple commandline app to parallelize your pdal pipelines on point clouds
 
 # Installation
 ### Using Pip
-
-You have to install 2.4+ version of pdal with conda to make python pdal works.
-
 ```bash
-  $ conda install -c conda-forge pdal
   $ pip install pdal-parallelizer
 ```
 ### Manual
@@ -76,3 +72,7 @@ At the end of each execution, you can get a graph of the memory usage. This may 
 ```bash
 $ pdal-parallelizer process-pipelines -c config.json -nw 3 -tpw 1
 ```
+
+#### Requirements
+
+PDAL 2.4+ (eg `conda install -c conda-forge pdal`)
