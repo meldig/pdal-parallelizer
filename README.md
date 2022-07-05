@@ -4,7 +4,11 @@ A simple commandline app to parallelize your pdal pipelines on point clouds
 
 # Installation
 ### Using Pip
+
+You have to install 2.4+ version of pdal with conda to make python pdal works.
+
 ```bash
+  $ conda install -c conda-forge pdal
   $ pip install pdal-parallelizer
 ```
 ### Manual
