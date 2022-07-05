@@ -1,22 +1,34 @@
-# PDAL-PARALLELIZER
+================================================
+PDAL-PARALLELIZER
+================================================
 
 A simple commandline app to parallelize your pdal pipelines on point clouds
 
-# Installation
-### Using Pip
-```bash
-  $ pip install pdal-parallelizer
-```
-### Manual
-```bash
-  $ git clone https://github.com/meldig/pdal-parallelizer
-  $ cd pdal-parallelizer
-  $ python setup.py install
-```
-# Usage
-```bash
-$ pdal-parallelizer
-```
+Installation
+------------------------------------------------
+
+Using Pip
+................................................
+
+.. code-block::
+
+  pip install pdal-parallelizer
+  
+Manual
+................................................
+
+.. code-block::
+
+  git clone https://github.com/meldig/pdal-parallelizer
+  cd pdal-parallelizer
+  python setup.py install
+
+Usage
+------------------------------------------------
+
+.. code-block::
+  
+  pdal-parallelizer
 
 ### Processing pipelines
 `process-pipelines <config file> <n_workers> <threads_per_worker>`
