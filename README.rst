@@ -17,7 +17,7 @@ Using Pip
 GitHub
 ................................................
 
-The repository for PDAL's Python extension is available at https://github.com/meldig/pdal-parallelizer
+The repository of pdal-parallelizer is available at https://github.com/meldig/pdal-parallelizer
 
 Usage
 -----------------------------------------------
