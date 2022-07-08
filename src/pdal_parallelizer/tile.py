@@ -6,23 +6,34 @@ import sys
 import pdal
 import json
 import os
+import copc
+import bounds
+import uuid
 
 
 class Tile:
-    def __init__(self, filepath, output_dir, json_pipeline):
+    def __init__(self, filepath, output_dir, json_pipeline, bounds=None):
         self.filepath = filepath
         self.output_dir = output_dir
         self.json_pipeline = json_pipeline
+        self.bounds = bounds
+        self.copc = copc.COPC(filepath, bounds)
 
-    def pipeline(self):
-        filename = os.path.basename(self.filepath).split('.')[0]
-        name = 'temp__' + filename
+    def pipeline(self, copc=None):
         output_dir = self.output_dir
-        output_filename = f'{output_dir}/{filename}.las'
 
         with open(self.json_pipeline, 'r') as pipeline:
             p = json.load(pipeline)
-            reader = list(filter(lambda x: x['type'] == 'readers.las', p))
+            if not copc:
+                filename = os.path.basename(self.filepath).split('.')[0]
+                reader = list(filter(lambda x: x['type'] == 'readers.las', p))
+            else:
+                filename = str(uuid.uuid4())
+                reader = list(filter(lambda x: x['type'] == 'readers.copc', p))
+                reader[0]['bounds'] = str(self.bounds)
+
+            name = 'temp__' + filename
+            output_filename = f'{output_dir}/{filename}.las'
             writer = list(filter(lambda x: x['type'] == 'writers.las', p))
 
             if not reader:
@@ -37,5 +48,27 @@ class Tile:
 
         return p, name
 
+    def split(self, distTileX, distTileY):
+        current_minx = self.bounds.minx
+        current_maxx = current_minx + distTileX
+        current_miny = self.bounds.miny
+        current_maxy = current_miny + distTileY
+
+        while current_maxx < self.bounds.maxx and current_maxy < self.bounds.maxy:
+            b = bounds.Bounds(current_minx, current_miny, current_maxx, current_maxy, self.bounds.resolution)
+            t = Tile(self.filepath, self.output_dir, self.json_pipeline, b)
+            current_minx += distTileX
+            current_maxx += distTileX
+
+            if current_maxx >= self.bounds.maxx:
+                current_minx = self.bounds.minx
+                current_maxx = current_minx + distTileX
+                current_miny += distTileY
+                current_maxy += distTileY
+
+            yield t
+
     def __str__(self):
-        return f'{self.filepath}'
+        return f'{self.bounds} - {self.filepath}'
+
+
