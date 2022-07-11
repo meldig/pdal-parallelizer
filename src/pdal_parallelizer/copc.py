@@ -37,15 +37,9 @@ class COPC:
         return self.info['num_points']
     count = property(getCount)
 
-    def reader(self, bounds=None, resolution=None):
+    def reader(self):
         """Returns the reader of the copc to get more information about it in the above function"""
         reader = pdal.Reader.copc(self.filepath)
-
-        if bounds:
-            reader._options['bounds'] = str(bounds)
-        if resolution:
-            reader._options['resolution'] = resolution
-
         return reader
 
     def compute_quickinfo(self, bounds):
@@ -55,7 +49,7 @@ class COPC:
         else:
             resolution = bounds.resolution
 
-        reader = self.reader(bounds, resolution)
+        reader = self.reader()
         # Get the copc information
         info = reader.pipeline().quickinfo['readers.copc']
         info['resolution'] = resolution
