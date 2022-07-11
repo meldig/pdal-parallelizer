@@ -22,13 +22,6 @@ The repository of pdal-parallelizer is available at https://github.com/meldig/pd
 Usage
 -----------------------------------------------
 
-Processing pipelines
-................................................
-
-.. code-block:: 
-
-  process-pipelines <config file> <n_workers> <threads_per_worker>`
-
 Config file
 ................................................
 
@@ -45,14 +38,39 @@ Your configuration file must be like that :
       "pipeline": "Your pipeline path"
   }
 
+Processing pipelines
+................................................
+
+.. code-block:: 
+
+  process-pipelines -c <config file> -nw <n_workers> -tpw <threads_per_worker> -dr <number of files> -d`
+
 Options
 .................................................
 
 - -c (--config) : path of your config file.
 - -nw (--n_workers) : number of cores you want for processing [default=3]
 - -tpw (--threads_per_worker) : number of threads for each worker [default=1]
-- -dr (--dry_run) : number of files to execute the test
-- -d (--diagnostic) : get a graph of the memory usage during the execution
+- -dr (--dry_run) : number of files to execute the test [default=False]
+- -d (--diagnostic) : get a graph of the memory usage during the execution (optional)
+
+Processing copc
+................................................
+
+.. code-block:: 
+
+  process-copc -f <copc file> -c <config file> -r <resolution> -nw <n_workers> -tpw <threads_per_worker>` -ts <tiles size> -d -dr <number of tiles>
+  
+Options
+.................................................
+
+- -f (--file) : path of your copc file
+- -c (--config) : path of your config file.
+- -r (--resolution) : resolution of the tiles (optional)
+- -nw (--n_workers) : number of cores you want for processing [default=3]
+- -tpw (--threads_per_worker) : number of threads for each worker [default=1]
+- -dr (--dry_run) : number of files to execute the test [default=False]
+- -d (--diagnostic) : get a graph of the memory usage during the execution (optional)
 
 Dry run
 =======
@@ -78,13 +96,6 @@ Diagnostic
 ==========
 
 At the end of each execution, you can get a graph of the memory usage. This may be interesting to analyze after a dry run. This graph will be in the output directory you specify in the config file.
-
-Exemple
-...........................................
-
-.. code-block::
-
-  pdal-parallelizer process-pipelines -c config.json -nw 3 -tpw 1
 
 Requirements
 ...........................................
