@@ -69,6 +69,7 @@ Options
 - -r (--resolution) : resolution of the tiles (optional)
 - -nw (--n_workers) : number of cores you want for processing [default=3]
 - -tpw (--threads_per_worker) : number of threads for each worker [default=1]
+- -ts (--tile_size) : size of the tiles [default=(100, 100)] (-ts 100 100)
 - -dr (--dry_run) : number of files to execute the test [default=False]
 - -d (--diagnostic) : get a graph of the memory usage during the execution (optional)
 
