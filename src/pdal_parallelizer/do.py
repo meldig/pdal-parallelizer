@@ -1,8 +1,6 @@
 """
 This is the do file. Here, we create the tiles in the createTiles function and then we execute their pipelines in the process function
 """
-import types
-import uuid
 import dask
 from dask.distributed import Lock
 import tile
@@ -12,7 +10,7 @@ import os
 
 
 @dask.delayed
-def process(pipeline, temp_dir=None, copc=False):
+def process(pipeline, temp_dir=None):
     if temp_dir:
         with Lock(str(pipeline[1])):
             temp_file = temp_dir + '/' + str(pipeline[1]) + '.pickle'
@@ -25,41 +23,45 @@ def process(pipeline, temp_dir=None, copc=False):
         pipeline[0].execute()
 
 
-def createTiles(output_dir, json_pipeline, temp_dir=None, file_iterator=None, pipeline_iterator=None, dry_run=False):
+def process_serialized_pipelines(temp_dir, iterator):
     delayedPipelines = []
-    if pipeline_iterator:
+    if iterator:
         while True:
             try:
-                p = next(pipeline_iterator)
+                p = next(iterator)
             except StopIteration:
                 break
 
             delayedPipelines.append(dask.delayed(process)(p, temp_dir))
-    else:
-        while True:
-            try:
-                f = next(file_iterator)
-                t = tile.Tile(f, output_dir, json_pipeline)
-                p = t.pipeline()
-                if not dry_run:
-                    delayedPipelines.append(serializePipeline(p, temp_dir))
-                else:
-                    delayedPipelines.append(dask.delayed(process)(p))
-            except StopIteration:
-                break
 
     return delayedPipelines
 
 
-def splitCopc(filepath, output_dir, json_pipeline, resolution, tile_bounds):
+def process_pipelines(output_dir, json_pipeline, iterator, temp_dir=None, dry_run=False, copc=False):
+    delayedPipelines = []
+    while True:
+        try:
+            t = next(iterator) if copc else tile.Tile(next(iterator), output_dir, json_pipeline)
+            p = t.pipeline(copc)
+            if not dry_run:
+                serializePipeline(p, temp_dir)
+                delayedPipelines.append(dask.delayed(process)(p, temp_dir))
+            else:
+                delayedPipelines.append(dask.delayed(process)(p))
+        except StopIteration:
+            break
+
+    return delayedPipelines
+
+
+def splitCopc(filepath, output_dir, json_pipeline, resolution, tile_bounds, nTiles=None):
     c = copc.COPC(filepath)
     c.bounds.resolution = resolution
     t = tile.Tile(filepath=c.filepath, output_dir=output_dir, json_pipeline=json_pipeline, bounds=c.bounds)
-    return t.split(tile_bounds[0], tile_bounds[1])
+    return t.split(tile_bounds[0], tile_bounds[1], nTiles)
 
 
-def serializePipeline(pipeline, temp_dir, copc=False):
+def serializePipeline(pipeline, temp_dir):
     temp_file = temp_dir + '/' + str(pipeline[1]) + '.pickle'
     with open(temp_file, 'wb') as outfile:
         pickle.dump(pipeline, outfile)
-    return dask.delayed(process)(pipeline=pipeline, temp_dir=temp_dir, copc=copc)

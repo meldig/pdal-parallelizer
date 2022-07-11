@@ -57,13 +57,14 @@ class Tile:
 
         return p, temp_name
 
-    def split(self, distTileX, distTileY):
+    def split(self, distTileX, distTileY, nTiles=None):
         current_minx = self.bounds.minx
         current_maxx = current_minx + distTileX
         current_miny = self.bounds.miny
         current_maxy = current_miny + distTileY
+        cpt = 0
 
-        while current_maxx < self.bounds.maxx and current_maxy < self.bounds.maxy:
+        while current_maxx < self.bounds.maxx and current_maxy < self.bounds.maxy and (cpt < nTiles if nTiles else True):
             b = bounds.Bounds(current_minx, current_miny, current_maxx, current_maxy, self.bounds.resolution)
             name = str(int(b.minx)) + '_' + str(int(b.miny))
             t = Tile(filepath=self.filepath, output_dir=self.output_dir, json_pipeline=self.json_pipeline, name=name, bounds=b)
@@ -75,6 +76,8 @@ class Tile:
                 current_maxx = current_minx + distTileX
                 current_miny += distTileY
                 current_maxy += distTileY
+
+            cpt += 1
 
             yield t
 
