@@ -12,28 +12,35 @@ import uuid
 
 
 class Tile:
-    def __init__(self, filepath, output_dir, json_pipeline, bounds=None):
+    def __init__(self, filepath, output_dir, json_pipeline, name=None, bounds=None):
         self.filepath = filepath
         self.output_dir = output_dir
         self.json_pipeline = json_pipeline
-        self.bounds = bounds
-        self.copc = copc.COPC(filepath, bounds)
 
-    def pipeline(self, copc=None):
+        if name:
+            self.name = name
+        else:
+            self.name = os.path.basename(self.filepath).split('.')[0]
+
+        self.bounds = bounds
+        if self.bounds:
+            self.copc = copc.COPC(filepath, bounds)
+
+    def getName(self):
+        return self.name
+
+    def pipeline(self, copc=False):
         output_dir = self.output_dir
 
         with open(self.json_pipeline, 'r') as pipeline:
             p = json.load(pipeline)
             if not copc:
-                filename = os.path.basename(self.filepath).split('.')[0]
                 reader = list(filter(lambda x: x['type'] == 'readers.las', p))
             else:
-                filename = str(uuid.uuid4())
                 reader = list(filter(lambda x: x['type'] == 'readers.copc', p))
-                reader[0]['bounds'] = str(self.bounds)
 
-            name = 'temp__' + filename
-            output_filename = f'{output_dir}/{filename}.las'
+            temp_name = 'temp__' + self.getName()
+            output_filename = f'{output_dir}/{self.getName()}.las'
             writer = list(filter(lambda x: x['type'] == 'writers.las', p))
 
             if not reader:
@@ -41,12 +48,14 @@ class Tile:
             elif not writer:
                 sys.exit("Please add a writer to your pipeline.")
 
+            if copc:
+                reader[0]['bounds'] = str(self.bounds)
             reader[0]['filename'] = self.filepath
             writer[0]['filename'] = output_filename
 
             p = pdal.Pipeline(json.dumps(p))
 
-        return p, name
+        return p, temp_name
 
     def split(self, distTileX, distTileY):
         current_minx = self.bounds.minx
@@ -56,7 +65,8 @@ class Tile:
 
         while current_maxx < self.bounds.maxx and current_maxy < self.bounds.maxy:
             b = bounds.Bounds(current_minx, current_miny, current_maxx, current_maxy, self.bounds.resolution)
-            t = Tile(self.filepath, self.output_dir, self.json_pipeline, b)
+            name = str(int(b.minx)) + '_' + str(int(b.miny))
+            t = Tile(filepath=self.filepath, output_dir=self.output_dir, json_pipeline=self.json_pipeline, name=name, bounds=b)
             current_minx += distTileX
             current_maxx += distTileX
 
@@ -69,6 +79,9 @@ class Tile:
             yield t
 
     def __str__(self):
-        return f'{self.bounds} - {self.filepath}'
+        if self.bounds:
+            return f'{self.bounds} - {self.filepath}'
+        else:
+            return f'{self.filepath}'
 
 

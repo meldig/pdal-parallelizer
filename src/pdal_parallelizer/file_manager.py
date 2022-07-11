@@ -9,20 +9,21 @@ from os.path import join
 
 
 def getFiles(input_directory, nFiles=None):
-    files = [join(input_directory, f) for f in listdir(input_directory)]
     if not nFiles:
-        return files
+        for f in listdir(input_directory):
+            yield join(input_directory, f)
     else:
+        files = [join(input_directory, f) for f in listdir(input_directory)]
         filesSize = [(join(input_directory, f), os.path.getsize(join(input_directory, f))) for f in files]
         filesSize.sort(key=lambda tup: tup[1], reverse=True)
-        sortedFiles = [filesSize[i][0] for i in range(len(filesSize))]
-        return sortedFiles[0:nFiles]
+        # sortedFiles = [filesSize[i][0] for i in range(len(filesSize))]
+        for i in range(nFiles):
+            yield filesSize[i][0]
+        # return sortedFiles[0:nFiles]
 
 
 def getSerializedPipelines(temp_directory):
-    pipelines = []
     for tmp in listdir(temp_directory):
         with open(join(temp_directory, tmp), 'rb') as p:
-            pipelines.append(pickle.load(p))
-
-    return pipelines
+            pipeline = pickle.load(p)
+        yield pipeline
