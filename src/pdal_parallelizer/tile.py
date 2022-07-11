@@ -13,8 +13,8 @@ import sys
 import pdal
 import json
 import os
-import copc
-import bounds
+from . import copc
+from . import bounds
 
 
 class Tile:
