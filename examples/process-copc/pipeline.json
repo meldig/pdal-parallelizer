@@ -1,0 +1,16 @@
+[
+  {
+    "type": "readers.copc"
+  },
+  {
+    "type": "filters.hag_nn",
+    "count": 100
+  },
+  {
+    "type": "filters.range",
+    "limits": "HeightAboveGround[:2]"
+  },
+  {
+    "type": "writers.las"
+  }
+]
