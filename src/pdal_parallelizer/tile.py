@@ -51,9 +51,10 @@ class Tile:
 
             # Create the name of the temp file associated to the pipeline
             temp_name = 'temp__' + self.getName()
-            output_filename = f'{output_dir}/{self.getName()}.las'
+            output_filename = f'{output_dir}/{self.getName()}'
             # Get the writer
-            writer = list(filter(lambda x: x['type'] == 'writers.las', p))
+            writer = list(filter(lambda x: x['type'].startswith('writers'), p))
+            extension = '.' + writer[0]['type'].split('.')[1] + '.las' if writer[0]['type'].split('.')[1] == 'copc' else '.' + writer[0]['type'].split('.')[1]
 
             # The pipeline must contains a reader AND a writer
             if not reader:
@@ -68,7 +69,7 @@ class Tile:
             # Add the filename option in the pipeline's reader to get the right file
             reader[0]['filename'] = self.filepath
             # Add the filename option in the pipeline's write to write the result in the right file
-            writer[0]['filename'] = output_filename
+            writer[0]['filename'] = output_filename + extension
 
             p = pdal.Pipeline(json.dumps(p))
 
@@ -103,9 +104,11 @@ class Tile:
                 current_miny += distTileY
                 current_maxy += distTileY
 
-            cpt += 1
-
-            yield t
+            if t.pipeline(True)[0].quickinfo['readers.copc']['num_points'] != 0:
+                cpt += 1
+                yield t
+            else:
+                print('There is no points in this tile, skipped.')
 
     def __str__(self):
         if self.bounds:
