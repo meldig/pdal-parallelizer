@@ -69,7 +69,7 @@ Options
 - -r (--resolution) : resolution of the tiles (optional)
 - -nw (--n_workers) : number of cores you want for processing [default=3]
 - -tpw (--threads_per_worker) : number of threads for each worker [default=1]
-- -ts (--tile_size) : size of the tiles [default=(100, 100)] (-ts 100 100)
+- -ts (--tile_size) : size of the tiles [default=(100, 100)] (-ts 100 100) (If a tile does not conatin any points, it will be not processed)
 - -dr (--dry_run) : number of files to execute the test [default=False]
 - -d (--diagnostic) : get a graph of the memory usage during the execution (optional)
 
@@ -92,6 +92,8 @@ If everything is good, you can lauch your treatment on your whole input director
 **Advice :** If your dry run is infinite, it's probably because your workers are down. Try to increase the timeout value and re-test.
 
 **PS :** Dry runs or just **test** executions, so it's not serializing your pipelines. Do not launch a dry run on your entire directory, if there is something wrong during it all your pipelines will have to be re-run, even those that have passed. 
+
+**PS2 :** If you want to do dry run for copc, pdal-parallelizer will take random tiles in your input file. If this tile does not contain any points, it wil be skipped and pdal-parallelizer will take another.
 
 Diagnostic
 ==========
