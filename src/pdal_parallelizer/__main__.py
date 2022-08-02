@@ -12,8 +12,8 @@ from dask import config as cfg
 from dask.distributed import LocalCluster, Client
 from distributed.diagnostics import MemorySampler
 from os import listdir
-from . import do
-from . import file_manager
+import do
+import file_manager
 from matplotlib import pyplot as plt
 
 
@@ -103,6 +103,8 @@ def process_pipelines(**kwargs):
 @click.option('-ts', '--tile_size', required=False, nargs=2, type=int, default=(256, 256))
 @click.option('-dr', '--dry_run', required=False, type=int)
 @click.option('-d', '--diagnostic', is_flag=True, required=False)
+@click.option('-b', '--buffer', required=False, type=int)
+@click.option('-rb', '--remove_buffer', is_flag=True, required=False)
 def process_copc(**kwargs):
     """Cut a copc file in many tiles and process pipeline on all these tiles"""
     with open(kwargs.get('config'), 'r') as c:
@@ -112,6 +114,8 @@ def process_copc(**kwargs):
         pipeline = config.get('pipeline')
 
     dry_run = kwargs.get('dry_run')
+    remove_buffer = kwargs.get('remove_buffer')
+    print(f"remove buffer : {remove_buffer}")
 
     # If there is some temp file in the temp directory, these are processed
     if len(listdir(temp_dir)) != 0:
@@ -124,13 +128,13 @@ def process_copc(**kwargs):
         print('Beginning of the execution')
         if not dry_run:
             # Split the copc in many tiles whose dimensions are entered by the user
-            iterator = do.splitCopc(kwargs.get('file'), output_dir, pipeline, kwargs.get('resolution'), kwargs.get('tile_size'))
+            iterator = do.splitCopc(kwargs.get('file'), output_dir, pipeline, kwargs.get('resolution'), kwargs.get('tile_size'), buffer=kwargs.get('buffer'), remove_buffer=remove_buffer)
             # Process pipelines
             delayed = do.process_pipelines(output_dir=output_dir, json_pipeline=pipeline, iterator=iterator,
                                            temp_dir=temp_dir, copc=True)
         else:
             # Get the number of tiles we want to do the test execution (not serialized)
-            iterator = do.splitCopc(kwargs.get('file'), output_dir, pipeline, kwargs.get('resolution'), kwargs.get('tile_size'), dry_run)
+            iterator = do.splitCopc(kwargs.get('file'), output_dir, pipeline, kwargs.get('resolution'), kwargs.get('tile_size'), dry_run, buffer=kwargs.get('buffer'), remove_buffer=remove_buffer)
             # Process pipelines (not serialized)
             delayed = do.process_pipelines(output_dir=output_dir, json_pipeline=config.get('pipeline'), iterator=iterator, dry_run=dry_run, copc=True)
 

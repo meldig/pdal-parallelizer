@@ -13,12 +13,12 @@ import sys
 import pdal
 import json
 import os
-from . import copc
-from . import bounds
+import copc
+import bounds
 
 
 class Tile:
-    def __init__(self, filepath, output_dir, json_pipeline, name=None, bounds=None):
+    def __init__(self, filepath, output_dir, json_pipeline, name=None, bounds=None, buffer=None, remove_buffer=False):
         self.filepath = filepath
         self.output_dir = output_dir
         self.json_pipeline = json_pipeline
@@ -28,7 +28,14 @@ class Tile:
         else:
             self.name = os.path.basename(self.filepath).split('.')[0]
 
-        self.bounds = bounds
+        self.buffer = buffer
+        self.remove_buffer = remove_buffer
+
+        if self.buffer:
+            self.bounds, self.assign = bounds.buffer(self.buffer)
+        else:
+            self.bounds = bounds
+
         if self.bounds:
             self.copc = copc.COPC(filepath, bounds)
 
@@ -42,6 +49,17 @@ class Tile:
         # Open the pipeline
         with open(self.json_pipeline, 'r') as pipeline:
             p = json.load(pipeline)
+
+            # If there is a buffer
+            if self.buffer:
+                # Assign the class 113 to it by adding an assign step to the pipeline
+                p.insert(1, self.assign)
+                # If the user wants to remove the buffer, it is removed by adding a range step to the pipeline
+                if self.remove_buffer:
+                    p.insert(len(p) - 1, bounds.removeBuffer())
+
+            print(p)
+
             # Create the name of the temp file associated to the pipeline
             temp_name = 'temp__' + self.getName()
             output_filename = f'{output_dir}/{self.getName()}'
@@ -85,7 +103,7 @@ class Tile:
             # Create it's name (minx_miny)
             name = str(int(b.minx)) + '_' + str(int(b.miny))
             # Create the tile
-            t = Tile(filepath=self.filepath, output_dir=self.output_dir, json_pipeline=self.json_pipeline, name=name, bounds=b)
+            t = Tile(filepath=self.filepath, output_dir=self.output_dir, json_pipeline=self.json_pipeline, name=name, bounds=b, buffer=self.buffer, remove_buffer=self.remove_buffer)
             # Add the width given by the user to shift right to create a new tile
             current_minx += distTileX
             current_maxx += distTileX
@@ -110,5 +128,3 @@ class Tile:
             return f'{self.bounds} - {self.filepath}'
         else:
             return f'{self.filepath}'
-
-
