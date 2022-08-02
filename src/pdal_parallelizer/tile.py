@@ -42,18 +42,13 @@ class Tile:
         # Open the pipeline
         with open(self.json_pipeline, 'r') as pipeline:
             p = json.load(pipeline)
-            # If it's not a copc, get the reader which is a 'readers.las'
-            if not copc:
-                reader = list(filter(lambda x: x['type'] == 'readers.las', p))
-            # If it's a copc, get the reader which is a 'readers.copc'
-            else:
-                reader = list(filter(lambda x: x['type'] == 'readers.copc', p))
-
             # Create the name of the temp file associated to the pipeline
             temp_name = 'temp__' + self.getName()
             output_filename = f'{output_dir}/{self.getName()}'
-            # Get the writer
+            # Get the reader and the writer
+            reader = list(filter(lambda x: x['type'].startswith('reader'), p))
             writer = list(filter(lambda x: x['type'].startswith('writers'), p))
+            # Get the extension for the output
             extension = '.' + writer[0]['type'].split('.')[1] + '.las' if writer[0]['type'].split('.')[1] == 'copc' else '.' + writer[0]['type'].split('.')[1]
 
             # The pipeline must contains a reader AND a writer
