@@ -6,8 +6,8 @@ Responsible of all the executions, serializations or creations of object we need
 
 import dask
 from dask.distributed import Lock
-from . import tile
-from . import copc
+import tile
+import copc
 import pickle
 import os
 

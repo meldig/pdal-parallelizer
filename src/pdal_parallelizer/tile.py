@@ -13,8 +13,8 @@ import sys
 import pdal
 import json
 import os
-from . import copc
-from . import bounds
+import copc
+import bounds
 
 
 class Tile:
@@ -57,8 +57,6 @@ class Tile:
                 # If the user wants to remove the buffer, it is removed by adding a range step to the pipeline
                 if self.remove_buffer:
                     p.insert(len(p) - 1, bounds.removeBuffer())
-
-            print(p)
 
             # Create the name of the temp file associated to the pipeline
             temp_name = 'temp__' + self.getName()

@@ -8,7 +8,7 @@ A COPC is composed of :
 
 import pdal
 from pyproj import CRS
-from .bounds import Bounds
+from bounds import Bounds
 
 
 class COPC:

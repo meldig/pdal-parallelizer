@@ -6,6 +6,7 @@ Responsible for retrieving all files requested by the user
 
 import os.path
 import pickle
+import sys
 from os import listdir
 from os.path import join
 
@@ -14,19 +15,25 @@ def getFiles(input_directory, nFiles=None):
     """Returns the files of the input directory"""
     # If it's not a dry run, all the files are returned
     if not nFiles:
-        for f in listdir(input_directory):
-            yield join(input_directory, f)
+        try:
+            for f in listdir(input_directory):
+                yield join(input_directory, f)
+        except NotADirectoryError:
+            sys.exit("The input attribute of your configuration file does not designate a directory. Maybe you are trying to process a copc ? Try adding the --copc flag.")
     # If it's a dry run, only the biggest nFiles of the directory are returned
     else:
-        # Get all the files
-        files = [join(input_directory, f) for f in listdir(input_directory)]
-        # Create tuples (filepath, filesize)
-        filesSize = [(join(input_directory, f), os.path.getsize(join(input_directory, f))) for f in files]
-        # Sort files in descending order
-        filesSize.sort(key=lambda tup: tup[1], reverse=True)
-        # Get the first nFiles
-        for i in range(nFiles):
-            yield filesSize[i][0]
+        try:
+            # Get all the files
+            files = [join(input_directory, f) for f in listdir(input_directory)]
+            # Create tuples (filepath, filesize)
+            filesSize = [(join(input_directory, f), os.path.getsize(join(input_directory, f))) for f in files]
+            # Sort files in descending order
+            filesSize.sort(key=lambda tup: tup[1], reverse=True)
+            # Get the first nFiles
+            for i in range(nFiles):
+                yield filesSize[i][0]
+        except NotADirectoryError:
+            sys.exit("The input attribute of your configuration file does not designate a directory. Maybe you are trying to process a copc ? Try adding the --copc flag.")
 
 
 def getSerializedPipelines(temp_directory):
