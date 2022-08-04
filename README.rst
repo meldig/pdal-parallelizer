@@ -60,7 +60,7 @@ Options
 - -d (--diagnostic) : get a graph of the memory usage during the execution (optional)
 
 If you specify the copc flag, you must change a little bit your config file. The input value will contains the path of your copc file, no longer the path of your directory of inputs.
-The -r, -ts, -b and -rb options are related to copc processing. So if you want to process las files for example, you don't have to specify these.
+The -r, -ts, -b, -bb and -rb options are related to copc processing. So if you want to process las files for example, you don't have to specify these.
 
 Dry run
 =======
