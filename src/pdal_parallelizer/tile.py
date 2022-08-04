@@ -13,12 +13,12 @@ import sys
 import pdal
 import json
 import os
-from . import copc
-from . import bounds
+import copc
+import bounds
 
 
 class Tile:
-    def __init__(self, filepath, output_dir, json_pipeline, name=None, bounds=None, buffer=None, remove_buffer=False):
+    def __init__(self, filepath, output_dir, json_pipeline, name=None, bounds=None, buffer=None, remove_buffer=False, copc_bounds=None):
         self.filepath = filepath
         self.output_dir = output_dir
         self.json_pipeline = json_pipeline
@@ -36,8 +36,10 @@ class Tile:
         else:
             self.bounds = bounds
 
-        if self.bounds:
-            self.copc = copc.COPC(filepath, bounds)
+        if copc_bounds:
+            self.copc = copc.COPC(filepath, copc_bounds)
+        elif self.bounds:
+            self.copc = copc.COPC(filepath)
 
     def getName(self):
         return self.name
@@ -88,6 +90,7 @@ class Tile:
 
     def split(self, distTileX, distTileY, nTiles=None):
         """Split the tile in small parts of given sizes"""
+        print(f'slef.copc : {self.copc}')
         current_minx = self.bounds.minx
         current_maxx = current_minx + distTileX
         current_miny = self.bounds.miny

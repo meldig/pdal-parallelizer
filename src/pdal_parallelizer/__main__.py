@@ -12,8 +12,8 @@ from dask import config as cfg
 from dask.distributed import LocalCluster, Client
 from distributed.diagnostics import MemorySampler
 from os import listdir
-from . import do
-from . import file_manager
+import do
+import file_manager
 from matplotlib import pyplot as plt
 
 
@@ -61,6 +61,7 @@ def compute_and_graph(client, tasks, output_dir, diagnostic):
 @click.option('-ts', '--tile_size', required=False, nargs=2, type=int, default=(256, 256))
 @click.option('-b', '--buffer', required=False, type=int)
 @click.option('-rb', '--remove_buffer', is_flag=True, required=False)
+@click.option('-bb', '--bounding_box', required=False, nargs=4, type=int)
 def process_pipelines(**kwargs):
     """Processing pipelines on many points cloud in parallel"""
     with open(kwargs.get('config'), 'r') as c:
@@ -80,6 +81,7 @@ def process_pipelines(**kwargs):
     tile_size = kwargs.get('tile_size')
     buffer = kwargs.get('buffer')
     remove_buffer = kwargs.get('remove_buffer')
+    bounding_box = kwargs.get('bounding_box')
 
     # If there is some temp file in the temp directory, these are processed
     if len(listdir(temp)) != 0:
@@ -99,7 +101,8 @@ def process_pipelines(**kwargs):
                                     resolution=resolution,
                                     tile_bounds=tile_size,
                                     buffer=buffer,
-                                    remove_buffer=remove_buffer) if copc \
+                                    remove_buffer=remove_buffer,
+                                    bounding_box=bounding_box) if copc \
                 else file_manager.getFiles(input_directory=input)
             # Process pipelines
             delayed = do.process_pipelines(output_dir=output, json_pipeline=pipeline, temp_dir=temp, iterator=iterator, copc=copc)
@@ -112,7 +115,8 @@ def process_pipelines(**kwargs):
                                     tile_bounds=tile_size,
                                     nTiles=dry_run,
                                     buffer=buffer,
-                                    remove_buffer=remove_buffer) if copc \
+                                    remove_buffer=remove_buffer,
+                                    bounding_box=bounding_box) if copc \
                 else file_manager.getFiles(input_directory=input, nFiles=dry_run)
             # Process pipelines
             delayed = do.process_pipelines(output_dir=output, json_pipeline=pipeline, iterator=iterator, dry_run=dry_run, copc=copc)
