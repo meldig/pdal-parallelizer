@@ -30,11 +30,9 @@ Your configuration file must be like that :
 .. code-block:: json
 
   {
-      "directories": {
-          "input_dir": "The folder that contains your input files",
-          "output_dir": "The folder that will receive your output files",
-          "temp_dir": "The folder that will contains your temporary files"
-      },
+      "input": "The folder that contains your input files (or the file path of your copc)",
+      "output": "The folder that will receive your output files",
+      "temp": "The folder that will contains your temporary files"
       "pipeline": "Your pipeline path"
   }
 
@@ -43,7 +41,8 @@ Processing pipelines
 
 .. code-block:: 
 
-  process-pipelines -c <config file> -nw <n_workers> -tpw <threads_per_worker> -dr <number of files> -d`
+  process-pipelines -c <config file> -nw <n_workers> -tpw <threads_per_worker> -dr <number of files> -d
+  process-pipelines -c <config file> -nw <n_workers> -tpw <threads_per_worker>` --copc -ts <tiles size> -d -dr <number of tiles> -b <buffer size>
 
 Options
 .................................................
@@ -51,27 +50,17 @@ Options
 - -c (--config) : path of your config file.
 - -nw (--n_workers) : number of cores you want for processing [default=3]
 - -tpw (--threads_per_worker) : number of threads for each worker [default=1]
-- -dr (--dry_run) : number of files to execute the test [default=False]
-- -d (--diagnostic) : get a graph of the memory usage during the execution (optional)
-
-Processing copc
-................................................
-
-.. code-block:: 
-
-  process-copc -f <copc file> -c <config file> -r <resolution> -nw <n_workers> -tpw <threads_per_worker>` -ts <tiles size> -d -dr <number of tiles>
-  
-Options
-.................................................
-
-- -f (--file) : path of your copc file
-- -c (--config) : path of your config file.
+- --copc : this flag indicate you will process a copc file. (optional)
 - -r (--resolution) : resolution of the tiles (optional)
-- -nw (--n_workers) : number of cores you want for processing [default=3]
-- -tpw (--threads_per_worker) : number of threads for each worker [default=1]
-- -ts (--tile_size) : size of the tiles [default=(100, 100)] (-ts 100 100) (If a tile does not conatin any points, it will be not processed)
-- -dr (--dry_run) : number of files to execute the test [default=False]
+- -ts (--tile_size) : size of the tiles [default=(100, 100)] (-ts 100 100) (If a tile does not contain any points, it will be not processed) (optional)
+- -b (--buffer) : size of the buffer that will be applied to the tiles (in all 4 directions) (optional)
+- -bb (--bounding_box) : coordinates of the bounding box you want to process (minx miny maxx maxy) (optional)
+- -rb (--remove_buffer) : this flag indicate you want to remove the buffer when your tiles are written (optional)
+- -dr (--dry_run) : number of files to execute the test [default=None]
 - -d (--diagnostic) : get a graph of the memory usage during the execution (optional)
+
+If you specify the copc flag, you must change a little bit your config file. The input value will contains the path of your copc file, no longer the path of your directory of inputs.
+The -r, -ts, -b, -bb and -rb options are related to copc processing. So if you want to process las files for example, you don't have to specify these.
 
 Dry run
 =======

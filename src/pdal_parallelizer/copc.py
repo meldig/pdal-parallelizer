@@ -17,16 +17,19 @@ class COPC:
         self.info = self.compute_quickinfo(bounds)
 
         # Get the copc information to set its bounds
-        bounds_dict = self.info['bounds']
-        minx, miny, = (
-            bounds_dict['minx'],
-            bounds_dict['miny']
-        )
+        if bounds:
+            minx, miny, maxx, maxy = bounds
+        else:
+            bounds_dict = self.info['bounds']
+            minx, miny, = (
+                bounds_dict['minx'],
+                bounds_dict['miny']
+            )
 
-        maxx, maxy = (
-            bounds_dict['maxx'],
-            bounds_dict['maxy']
-        )
+            maxx, maxy = (
+                bounds_dict['maxx'],
+                bounds_dict['maxy']
+            )
 
         srs = CRS(self.info['srs']['compoundwkt'])
         # Create bounds for the copc
@@ -44,10 +47,7 @@ class COPC:
 
     def compute_quickinfo(self, bounds):
         """Returns some information about the copc."""
-        if not bounds:
-            resolution = 20000
-        else:
-            resolution = bounds.resolution
+        resolution = 20000
 
         reader = self.reader()
         # Get the copc information

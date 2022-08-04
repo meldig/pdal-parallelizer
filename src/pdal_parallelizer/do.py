@@ -71,14 +71,14 @@ def process_pipelines(output_dir, json_pipeline, iterator, temp_dir=None, dry_ru
     return delayedPipelines
 
 
-def splitCopc(filepath, output_dir, json_pipeline, resolution, tile_bounds, nTiles=None):
+def splitCopc(filepath, output_dir, json_pipeline, resolution, tile_bounds, nTiles=None, buffer=None, remove_buffer=False, bounding_box=None):
     """Split the copc in many tiles"""
     # Create a copc object
-    c = copc.COPC(filepath)
+    c = copc.COPC(filepath, bounding_box)
     # Set its bounds resolution
     c.bounds.resolution = resolution
     # Create a tile the size of the copc
-    t = tile.Tile(filepath=c.filepath, output_dir=output_dir, json_pipeline=json_pipeline, bounds=c.bounds)
+    t = tile.Tile(filepath=c.filepath, output_dir=output_dir, json_pipeline=json_pipeline, bounds=c.bounds, buffer=buffer, remove_buffer=remove_buffer, copc_bounds=bounding_box)
     # Split the tile in small parts of given sizes
     return t.split(tile_bounds[0], tile_bounds[1], nTiles)
 

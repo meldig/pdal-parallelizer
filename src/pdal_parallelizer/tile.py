@@ -18,7 +18,7 @@ from . import bounds
 
 
 class Tile:
-    def __init__(self, filepath, output_dir, json_pipeline, name=None, bounds=None):
+    def __init__(self, filepath, output_dir, json_pipeline, name=None, bounds=None, buffer=None, remove_buffer=False, copc_bounds=None):
         self.filepath = filepath
         self.output_dir = output_dir
         self.json_pipeline = json_pipeline
@@ -28,9 +28,18 @@ class Tile:
         else:
             self.name = os.path.basename(self.filepath).split('.')[0]
 
-        self.bounds = bounds
-        if self.bounds:
-            self.copc = copc.COPC(filepath, bounds)
+        self.buffer = buffer
+        self.remove_buffer = remove_buffer
+
+        if self.buffer:
+            self.bounds, self.assign = bounds.buffer(self.buffer)
+        else:
+            self.bounds = bounds
+
+        if copc_bounds:
+            self.copc = copc.COPC(filepath, copc_bounds)
+        elif self.bounds:
+            self.copc = copc.COPC(filepath)
 
     def getName(self):
         return self.name
@@ -42,18 +51,22 @@ class Tile:
         # Open the pipeline
         with open(self.json_pipeline, 'r') as pipeline:
             p = json.load(pipeline)
-            # If it's not a copc, get the reader which is a 'readers.las'
-            if not copc:
-                reader = list(filter(lambda x: x['type'] == 'readers.las', p))
-            # If it's a copc, get the reader which is a 'readers.copc'
-            else:
-                reader = list(filter(lambda x: x['type'] == 'readers.copc', p))
+
+            # If there is a buffer
+            if self.buffer:
+                # Assign the class 113 to it by adding an assign step to the pipeline
+                p.insert(1, self.assign)
+                # If the user wants to remove the buffer, it is removed by adding a range step to the pipeline
+                if self.remove_buffer:
+                    p.insert(len(p) - 1, bounds.removeBuffer())
 
             # Create the name of the temp file associated to the pipeline
             temp_name = 'temp__' + self.getName()
             output_filename = f'{output_dir}/{self.getName()}'
-            # Get the writer
+            # Get the reader and the writer
+            reader = list(filter(lambda x: x['type'].startswith('reader'), p))
             writer = list(filter(lambda x: x['type'].startswith('writers'), p))
+            # Get the extension for the output
             extension = '.' + writer[0]['type'].split('.')[1] + '.las' if writer[0]['type'].split('.')[1] == 'copc' else '.' + writer[0]['type'].split('.')[1]
 
             # The pipeline must contains a reader AND a writer
@@ -77,6 +90,7 @@ class Tile:
 
     def split(self, distTileX, distTileY, nTiles=None):
         """Split the tile in small parts of given sizes"""
+        print(f'slef.copc : {self.copc}')
         current_minx = self.bounds.minx
         current_maxx = current_minx + distTileX
         current_miny = self.bounds.miny
@@ -90,7 +104,7 @@ class Tile:
             # Create it's name (minx_miny)
             name = str(int(b.minx)) + '_' + str(int(b.miny))
             # Create the tile
-            t = Tile(filepath=self.filepath, output_dir=self.output_dir, json_pipeline=self.json_pipeline, name=name, bounds=b)
+            t = Tile(filepath=self.filepath, output_dir=self.output_dir, json_pipeline=self.json_pipeline, name=name, bounds=b, buffer=self.buffer, remove_buffer=self.remove_buffer)
             # Add the width given by the user to shift right to create a new tile
             current_minx += distTileX
             current_maxx += distTileX
@@ -115,5 +129,3 @@ class Tile:
             return f'{self.bounds} - {self.filepath}'
         else:
             return f'{self.filepath}'
-
-
