@@ -54,6 +54,7 @@ Options
 - -r (--resolution) : resolution of the tiles (optional)
 - -ts (--tile_size) : size of the tiles [default=(100, 100)] (-ts 100 100) (If a tile does not contain any points, it will be not processed) (optional)
 - -b (--buffer) : size of the buffer that will be applied to the tiles (in all 4 directions) (optional)
+- -bb (--bounding_box) : coordinates of the bounding box you want to process (minx miny maxx maxy) (optional)
 - -rb (--remove_buffer) : this flag indicate you want to remove the buffer when your tiles are written (optional)
 - -dr (--dry_run) : number of files to execute the test [default=None]
 - -d (--diagnostic) : get a graph of the memory usage during the execution (optional)
