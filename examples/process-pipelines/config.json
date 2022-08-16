@@ -1,8 +1,0 @@
-{
-  "directories": {
-    "input_dir": "C:/Documents/my_input_directory",
-    "output_dir": "C:/Documents/my_output_directory",
-    "temp_dir": "C:/Documents/my_temp_directory"
-  },
-  "pipeline": "C:/Documents/my_pipeline.json"
-}
