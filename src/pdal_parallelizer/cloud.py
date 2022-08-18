@@ -9,7 +9,7 @@ A Cloud is composed of :
 
 import subprocess
 import json
-from bounds import Bounds
+from .bounds import Bounds
 
 
 def crop(bounds):
