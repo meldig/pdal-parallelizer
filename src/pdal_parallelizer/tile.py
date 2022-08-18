@@ -113,12 +113,21 @@ class Tile:
 
             # If the current maxx value exceeds the right edge of the cloud
             if current_maxx >= self.cloud.bounds.maxx:
-                # Return to the left edge to create new tiles
-                current_minx = self.bounds.minx
-                current_maxx = current_minx + distTileX
-                # Move down from the height value given by the user
-                current_miny += distTileY
-                current_maxy += distTileY
+                if t.bounds.maxx < self.cloud.bounds.maxx:
+                    dist = self.cloud.bounds.maxx - t.bounds.maxx
+                    current_maxx = t.bounds.maxx + dist
+                else:
+                    # Return to the left edge to create new tiles
+                    current_minx = self.bounds.minx
+                    current_maxx = current_minx + distTileX
+                    # Move down from the height value given by the user
+                    current_miny += distTileY
+                    current_maxy += distTileY
+
+            if current_maxy > self.cloud.bounds.maxy:
+                if t.bounds.maxy < self.cloud.bounds.maxy:
+                    dist = self.cloud.bounds.maxy - t.bounds.maxy
+                    current_maxy = t.bounds.maxy + dist
 
             cpt += 1
             yield t
