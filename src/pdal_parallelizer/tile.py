@@ -42,7 +42,7 @@ class Tile:
     def getName(self):
         return self.name
 
-    def pipeline(self, single_file, is_copc):
+    def pipeline(self, single_file):
         """Assign a pipeline to the tile"""
         output_dir = self.output_dir
 
@@ -75,12 +75,8 @@ class Tile:
 
             # If the input is a single file
             if single_file:
-                # If it's a copc, bounds are added to divide the copc in small tiles
-                if is_copc:
-                    reader[0]['bounds'] = str(self.bounds)
-                # Else, add a crop filter to divide the cloud in small tiles
-                else:
-                    p.insert(1, cloud.crop(self.bounds))
+                # Add a crop filter to divide the cloud in small tiles
+                p.insert(1, cloud.crop(self.bounds))
 
             # Add the filename option in the pipeline's reader to get the right file
             reader[0]['filename'] = self.filepath
@@ -91,7 +87,7 @@ class Tile:
 
         return p, temp_name
 
-    def split(self, distTileX, distTileY, nTiles=None, copc=False):
+    def split(self, distTileX, distTileY, nTiles=None):
         """Split the tile in small parts of given sizes"""
         current_minx = self.bounds.minx
         current_maxx = current_minx + distTileX
@@ -113,8 +109,11 @@ class Tile:
 
             # If the current maxx value exceeds the right edge of the cloud
             if current_maxx >= self.cloud.bounds.maxx:
+                # And if there is a piece of cloud non processed
                 if t.bounds.maxx < self.cloud.bounds.maxx:
+                    # Calculate the offset distance
                     dist = self.cloud.bounds.maxx - t.bounds.maxx
+                    # Shift
                     current_maxx = t.bounds.maxx + dist
                 else:
                     # Return to the left edge to create new tiles
@@ -124,9 +123,13 @@ class Tile:
                     current_miny += distTileY
                     current_maxy += distTileY
 
+            # If the current maxy value exceeds the top edge of the cloud
             if current_maxy > self.cloud.bounds.maxy:
+                # And if there is a piece of cloud non processed
                 if t.bounds.maxy < self.cloud.bounds.maxy:
+                    # Calculate the offset distance
                     dist = self.cloud.bounds.maxy - t.bounds.maxy
+                    # Shift
                     current_maxy = t.bounds.maxy + dist
 
             cpt += 1

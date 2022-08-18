@@ -56,7 +56,6 @@ def compute_and_graph(client, tasks, output_dir, diagnostic):
 @click.option('-tpw', '--threads_per_worker', required=False, type=int, default=1)
 @click.option('-dr', '--dry_run', required=False, type=int)
 @click.option('-d', '--diagnostic', is_flag=True, required=False)
-@click.option('--copc', is_flag=True, required=False)
 @click.option('-it', '--input_type', required=True, type=click.Choice(['single', 'list']))
 @click.option('-r', '--resolution', required=False, type=int, default=20000)
 @click.option('-ts', '--tile_size', required=False, nargs=2, type=int, default=(256, 256))
@@ -77,7 +76,6 @@ def process_pipelines(**kwargs):
     threads_per_worker = kwargs.get('threads_per_worker')
     dry_run = kwargs.get('dry_run')
     diagnostic = kwargs.get('diagnostic')
-    is_copc = kwargs.get('copc')
     input_type = kwargs.get('input_type')
     resolution = kwargs.get('resolution')
     tile_size = kwargs.get('tile_size')
@@ -105,12 +103,11 @@ def process_pipelines(**kwargs):
                                      tile_bounds=tile_size,
                                      buffer=buffer,
                                      remove_buffer=remove_buffer,
-                                     bounding_box=bounding_box,
-                                     is_copc=is_copc) if input_type == 'single' \
+                                     bounding_box=bounding_box) if input_type == 'single' \
                 else file_manager.getFiles(input_directory=input)
             # Process pipelines
             delayed = do.process_pipelines(output_dir=output, json_pipeline=pipeline, temp_dir=temp, iterator=iterator,
-                                           is_single=(input_type == 'single'), is_copc=is_copc)
+                                           is_single=(input_type == 'single'))
         else:
             # If the user wants to process a single file, it is split and get the number of tiles given by the user. Else, get the number of files we want to do the test execution (not serialized)
             iterator = do.splitCloud(filepath=input,
@@ -121,12 +118,11 @@ def process_pipelines(**kwargs):
                                      nTiles=dry_run,
                                      buffer=buffer,
                                      remove_buffer=remove_buffer,
-                                     bounding_box=bounding_box,
-                                     is_copc=is_copc) if input_type == 'single' \
+                                     bounding_box=bounding_box) if input_type == 'single' \
                 else file_manager.getFiles(input_directory=input, nFiles=dry_run)
             # Process pipelines
             delayed = do.process_pipelines(output_dir=output, json_pipeline=pipeline, iterator=iterator,
-                                           dry_run=dry_run, is_single=(input_type == 'single'), is_copc=is_copc)
+                                           dry_run=dry_run, is_single=(input_type == 'single'))
 
     client = config_dask(n_workers=n_workers, threads_per_worker=threads_per_worker)
 

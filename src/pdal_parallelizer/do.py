@@ -47,13 +47,13 @@ def process_serialized_pipelines(temp_dir, iterator):
     return delayedPipelines
 
 
-def process_pipelines(output_dir, json_pipeline, iterator, temp_dir=None, dry_run=False, is_single=False, is_copc=False):
+def process_pipelines(output_dir, json_pipeline, iterator, temp_dir=None, dry_run=False, is_single=False):
     delayedPipelines = []
     while True:
         try:
             # If it's a cloud, 'next(iterator)' is a tile. Else, 'next(iterator)' is a filepath so a tile must be created
             t = next(iterator) if is_single else tile.Tile(next(iterator), output_dir, json_pipeline)
-            p = t.pipeline(is_single, is_copc)
+            p = t.pipeline(is_single)
             # If it's not a dry run, the pipeline must be serialized
             if not dry_run:
                 serializePipeline(p, temp_dir)
@@ -67,7 +67,7 @@ def process_pipelines(output_dir, json_pipeline, iterator, temp_dir=None, dry_ru
     return delayedPipelines
 
 
-def splitCloud(filepath, output_dir, json_pipeline, resolution, tile_bounds, nTiles=None, buffer=None, remove_buffer=False, bounding_box=None, is_copc=False):
+def splitCloud(filepath, output_dir, json_pipeline, resolution, tile_bounds, nTiles=None, buffer=None, remove_buffer=False, bounding_box=None):
     """Split the cloud in many tiles"""
     # Create a cloud object
     c = cloud.Cloud(filepath, resolution, bounds=bounding_box)
@@ -76,7 +76,7 @@ def splitCloud(filepath, output_dir, json_pipeline, resolution, tile_bounds, nTi
     # Create a tile the size of the cloud
     t = tile.Tile(filepath=c.filepath, output_dir=output_dir, json_pipeline=json_pipeline, bounds=c.bounds, buffer=buffer, remove_buffer=remove_buffer, cloud_object=c, cloud_bounds=bounding_box)
     # Split the tile in small parts of given sizes
-    return t.split(tile_bounds[0], tile_bounds[1], nTiles, is_copc)
+    return t.split(tile_bounds[0], tile_bounds[1], nTiles)
 
 
 def serializePipeline(pipeline, temp_dir):
