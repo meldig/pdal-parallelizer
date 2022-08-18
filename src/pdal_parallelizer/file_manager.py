@@ -9,6 +9,9 @@ import pickle
 import sys
 from os import listdir
 from os.path import join
+import statistics
+import subprocess
+import json
 
 
 def getFiles(input_directory, nFiles=None):
@@ -44,3 +47,28 @@ def getSerializedPipelines(temp_directory):
             # Deserialize it
             pipeline = pickle.load(p)
         yield pipeline
+
+
+def getEmptyWeight(output_directory):
+    # Get the output directory files size in bytes
+    weights_bytes = [os.path.getsize(join(output_directory, f)) for f in listdir(output_directory)]
+    # Convert it in ko
+    weights_ko = [round(b / 1024, 2) for b in weights_bytes]
+    # Calculate the deciles
+    deciles = [round(q, 2) for q in statistics.quantiles(weights_ko, n=10)]
+    # And retrieve files whose weight is in the first decile
+    weight_files = [join(output_directory, f) for f in listdir(output_directory) if round(os.path.getsize(join(output_directory, f)) / 1024, 2) <= deciles[0]]
+    removeEmptyFiles(weight_files)
+
+
+def removeEmptyFiles(files):
+    # For each file
+    for f in files:
+        # Run pdal info
+        pdal_info = subprocess.run(['pdal', 'info', f, "--dimensions", "X"],
+                                   stderr=subprocess.PIPE,
+                                   stdout=subprocess.PIPE)
+        info = json.loads(pdal_info.stdout.decode())
+        # Get the number of points
+        if info['stats']['statistic'][0]['count'] == 0:
+            os.remove(f)
