@@ -13,12 +13,12 @@ import sys
 import pdal
 import json
 import os
-from . import copc
-from . import bounds
+import cloud
+import bounds
 
 
 class Tile:
-    def __init__(self, filepath, output_dir, json_pipeline, name=None, bounds=None, buffer=None, remove_buffer=False, copc_bounds=None):
+    def __init__(self, filepath, output_dir, json_pipeline, name=None, bounds=None, buffer=None, remove_buffer=False, cloud_object=None, cloud_bounds=None):
         self.filepath = filepath
         self.output_dir = output_dir
         self.json_pipeline = json_pipeline
@@ -36,15 +36,13 @@ class Tile:
         else:
             self.bounds = bounds
 
-        if copc_bounds:
-            self.copc = copc.COPC(filepath, copc_bounds)
-        elif self.bounds:
-            self.copc = copc.COPC(filepath)
+        if cloud_object:
+            self.cloud = cloud_object
 
     def getName(self):
         return self.name
 
-    def pipeline(self, copc=False):
+    def pipeline(self, single_file):
         """Assign a pipeline to the tile"""
         output_dir = self.output_dir
 
@@ -54,7 +52,7 @@ class Tile:
 
             # If there is a buffer
             if self.buffer:
-                # Assign the class 113 to it by adding an assign step to the pipeline
+                # Assign the class 113 to it by adding an assign filter to the pipeline
                 p.insert(1, self.assign)
                 # If the user wants to remove the buffer, it is removed by adding a range step to the pipeline
                 if self.remove_buffer:
@@ -64,7 +62,7 @@ class Tile:
             temp_name = 'temp__' + self.getName()
             output_filename = f'{output_dir}/{self.getName()}'
             # Get the reader and the writer
-            reader = list(filter(lambda x: x['type'].startswith('reader'), p))
+            reader = list(filter(lambda x: x['type'].startswith('readers'), p))
             writer = list(filter(lambda x: x['type'].startswith('writers'), p))
             # Get the extension for the output
             extension = '.' + writer[0]['type'].split('.')[1] + '.las' if writer[0]['type'].split('.')[1] == 'copc' else '.' + writer[0]['type'].split('.')[1]
@@ -75,13 +73,14 @@ class Tile:
             elif not writer:
                 sys.exit("Please add a writer to your pipeline.")
 
-            # If it's a copc, bounds are added to divide the copc in small tiles
-            if copc:
-                reader[0]['bounds'] = str(self.bounds)
+            # If the input is a single file
+            if single_file:
+                # Add a crop filter to divide the cloud in small tiles
+                p.insert(1, cloud.crop(self.bounds))
 
             # Add the filename option in the pipeline's reader to get the right file
             reader[0]['filename'] = self.filepath
-            # Add the filename option in the pipeline's write to write the result in the right file
+            # Add the filename option in the pipeline's writer to write the result in the right file
             writer[0]['filename'] = output_filename + extension
 
             p = pdal.Pipeline(json.dumps(p))
@@ -90,7 +89,6 @@ class Tile:
 
     def split(self, distTileX, distTileY, nTiles=None):
         """Split the tile in small parts of given sizes"""
-        print(f'slef.copc : {self.copc}')
         current_minx = self.bounds.minx
         current_maxx = current_minx + distTileX
         current_miny = self.bounds.miny
@@ -109,20 +107,33 @@ class Tile:
             current_minx += distTileX
             current_maxx += distTileX
 
-            # If the current maxx value exceeds the right edge of the copc
-            if current_maxx >= self.copc.bounds.maxx:
-                # Return to the left edge to create new tiles
-                current_minx = self.bounds.minx
-                current_maxx = current_minx + distTileX
-                # Move down from the height value given by the user
-                current_miny += distTileY
-                current_maxy += distTileY
+            # If the current maxx value exceeds the right edge of the cloud
+            if current_maxx >= self.cloud.bounds.maxx:
+                # And if there is a piece of cloud non processed
+                if t.bounds.maxx < self.cloud.bounds.maxx:
+                    # Calculate the offset distance
+                    dist = self.cloud.bounds.maxx - t.bounds.maxx
+                    # Shift
+                    current_maxx = t.bounds.maxx + dist
+                else:
+                    # Return to the left edge to create new tiles
+                    current_minx = self.bounds.minx
+                    current_maxx = current_minx + distTileX
+                    # Move down from the height value given by the user
+                    current_miny += distTileY
+                    current_maxy += distTileY
 
-            if t.pipeline(True)[0].quickinfo['readers.copc']['num_points'] != 0:
-                cpt += 1
-                yield t
-            else:
-                print('There is no points in this tile, skipped.')
+            # If the current maxy value exceeds the top edge of the cloud
+            if current_maxy > self.cloud.bounds.maxy:
+                # And if there is a piece of cloud non processed
+                if t.bounds.maxy < self.cloud.bounds.maxy:
+                    # Calculate the offset distance
+                    dist = self.cloud.bounds.maxy - t.bounds.maxy
+                    # Shift
+                    current_maxy = t.bounds.maxy + dist
+
+            cpt += 1
+            yield t
 
     def __str__(self):
         if self.bounds:

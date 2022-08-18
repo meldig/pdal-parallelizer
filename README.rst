@@ -30,7 +30,7 @@ Your configuration file must be like that :
 .. code-block:: json
 
   {
-      "input": "The folder that contains your input files (or the file path of your copc)",
+      "input": "The folder that contains your input files (or a file path)",
       "output": "The folder that will receive your output files",
       "temp": "The folder that will contains your temporary files"
       "pipeline": "Your pipeline path"
@@ -41,26 +41,26 @@ Processing pipelines
 
 .. code-block:: 
 
-  process-pipelines -c <config file> -nw <n_workers> -tpw <threads_per_worker> -dr <number of files> -d
-  process-pipelines -c <config file> -nw <n_workers> -tpw <threads_per_worker>` --copc -ts <tiles size> -d -dr <number of tiles> -b <buffer size>
+  process-pipelines -c <config file> -it list -nw <n_workers> -tpw <threads_per_worker> -dr <number of files> -d
+  process-pipelines -c <config file> -it single -nw <n_workers> -tpw <threads_per_worker> -ts <tiles size> -d -dr <number of tiles> -b <buffer size>
 
 Options
 .................................................
 
 - -c (--config) : path of your config file.
+- -it (--input_type) : this option indicates whether you are processing a single file or a list of files [single, list]
 - -nw (--n_workers) : number of cores you want for processing [default=3]
 - -tpw (--threads_per_worker) : number of threads for each worker [default=1]
-- --copc : this flag indicate you will process a copc file. (optional)
-- -r (--resolution) : resolution of the tiles (optional)
-- -ts (--tile_size) : size of the tiles [default=(100, 100)] (-ts 100 100) (If a tile does not contain any points, it will be not processed) (optional)
-- -b (--buffer) : size of the buffer that will be applied to the tiles (in all 4 directions) (optional)
-- -bb (--bounding_box) : coordinates of the bounding box you want to process (minx miny maxx maxy) (optional)
-- -rb (--remove_buffer) : this flag indicate you want to remove the buffer when your tiles are written (optional)
+- -r (--resolution) : resolution of the tiles [default=20000] (optional) (single file only)
+- -ts (--tile_size) : size of the tiles [default=(100, 100)] (-ts 100 100) (If a tile does not contain any points, it will be not processed) [default=(256,256)] (optional) (single file only)
+- -b (--buffer) : size of the buffer that will be applied to the tiles (in all 4 directions) (optional) (single file only)
+- -bb (--bounding_box) : coordinates of the bounding box you want to process (minx miny maxx maxy) (optional) (single file only)
+- -rb (--remove_buffer) : this flag indicate you want to remove the buffer when your tiles are written (optional) (single file only)
 - -dr (--dry_run) : number of files to execute the test [default=None]
 - -d (--diagnostic) : get a graph of the memory usage during the execution (optional)
 
-If you specify the copc flag, you must change a little bit your config file. The input value will contains the path of your copc file, no longer the path of your directory of inputs.
-The -r, -ts, -b, -bb and -rb options are related to copc processing. So if you want to process las files for example, you don't have to specify these.
+If you specify ``-it single``, the input value of the config file will contains the path of your file, no longer the path of your directory of inputs.
+The -r, -ts, -b, -bb and -rb options are related to single file processing. So if you want to process a list of files, you don't have to specify these.
 
 Dry run
 =======
@@ -82,7 +82,7 @@ If everything is good, you can lauch your treatment on your whole input director
 
 **PS :** Dry runs or just **test** executions, so it's not serializing your pipelines. Do not launch a dry run on your entire directory, if there is something wrong during it all your pipelines will have to be re-run, even those that have passed. 
 
-**PS2 :** If you want to do dry run for copc, pdal-parallelizer will take random tiles in your input file. If this tile does not contain any points, it wil be skipped and pdal-parallelizer will take another.
+**PS2 :** If you want to do a dry run for a single file, pdal-parallelizer will take random tiles in your input file.
 
 Diagnostic
 ==========

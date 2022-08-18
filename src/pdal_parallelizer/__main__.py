@@ -1,7 +1,7 @@
 """
 Main file.
 
-Contains the process-pipelines and the process-copc functions you call in command line
+Contains the process-pipelines function you call in command line
 """
 
 import json
@@ -12,13 +12,13 @@ from dask import config as cfg
 from dask.distributed import LocalCluster, Client
 from distributed.diagnostics import MemorySampler
 from os import listdir
-from . import do
-from . import file_manager
+import do
+import file_manager
 from matplotlib import pyplot as plt
 
 
 @click.group()
-@click.version_option('1.8.11')
+@click.version_option('1.9.11')
 def main():
     """A simple parallelization tool for 3d point clouds treatment"""
     pass
@@ -56,12 +56,12 @@ def compute_and_graph(client, tasks, output_dir, diagnostic):
 @click.option('-tpw', '--threads_per_worker', required=False, type=int, default=1)
 @click.option('-dr', '--dry_run', required=False, type=int)
 @click.option('-d', '--diagnostic', is_flag=True, required=False)
-@click.option('--copc', is_flag=True, required=False)
-@click.option('-r', '--resolution', required=False, type=int)
+@click.option('-it', '--input_type', required=True, type=click.Choice(['single', 'list']))
+@click.option('-r', '--resolution', required=False, type=int, default=20000)
 @click.option('-ts', '--tile_size', required=False, nargs=2, type=int, default=(256, 256))
 @click.option('-b', '--buffer', required=False, type=int)
 @click.option('-rb', '--remove_buffer', is_flag=True, required=False)
-@click.option('-bb', '--bounding_box', required=False, nargs=4, type=int)
+@click.option('-bb', '--bounding_box', required=False, nargs=4, type=float)
 def process_pipelines(**kwargs):
     """Processing pipelines on many points cloud in parallel"""
     with open(kwargs.get('config'), 'r') as c:
@@ -76,7 +76,7 @@ def process_pipelines(**kwargs):
     threads_per_worker = kwargs.get('threads_per_worker')
     dry_run = kwargs.get('dry_run')
     diagnostic = kwargs.get('diagnostic')
-    copc = kwargs.get('copc')
+    input_type = kwargs.get('input_type')
     resolution = kwargs.get('resolution')
     tile_size = kwargs.get('tile_size')
     buffer = kwargs.get('buffer')
@@ -85,7 +85,8 @@ def process_pipelines(**kwargs):
 
     # If there is some temp file in the temp directory, these are processed
     if len(listdir(temp)) != 0:
-        click.echo('Something went wrong during previous execution, there is some temp files in your temp directory.\n Beginning of the execution\n')
+        click.echo(
+            'Something went wrong during previous execution, there is some temp files in your temp directory.\n Beginning of the execution\n')
         # Get all the deserialized pipelines
         pipeline_iterator = file_manager.getSerializedPipelines(temp_directory=temp)
         # Process pipelines
@@ -94,37 +95,41 @@ def process_pipelines(**kwargs):
         click.echo('Beginning of the execution\n')
         # If the user don't specify the dry_run option
         if not dry_run:
-            # If the copc flag is specified, split the copc. Else, get all the files of the input directory
-            iterator = do.splitCopc(filepath=input,
-                                    output_dir=output,
-                                    json_pipeline=pipeline,
-                                    resolution=resolution,
-                                    tile_bounds=tile_size,
-                                    buffer=buffer,
-                                    remove_buffer=remove_buffer,
-                                    bounding_box=bounding_box) if copc \
+            # If the user wants to process a single file, it is split. Else, get all the files of the input directory
+            iterator = do.splitCloud(filepath=input,
+                                     output_dir=output,
+                                     json_pipeline=pipeline,
+                                     resolution=resolution,
+                                     tile_bounds=tile_size,
+                                     buffer=buffer,
+                                     remove_buffer=remove_buffer,
+                                     bounding_box=bounding_box) if input_type == 'single' \
                 else file_manager.getFiles(input_directory=input)
             # Process pipelines
-            delayed = do.process_pipelines(output_dir=output, json_pipeline=pipeline, temp_dir=temp, iterator=iterator, copc=copc)
+            delayed = do.process_pipelines(output_dir=output, json_pipeline=pipeline, temp_dir=temp, iterator=iterator,
+                                           is_single=(input_type == 'single'))
         else:
-            # If the copc flag is specified, split the copc and get the number of tiles given by the user. Else, get the number of files we want to do the test execution (not serialized)
-            iterator = do.splitCopc(filepath=input,
-                                    output_dir=output,
-                                    json_pipeline=pipeline,
-                                    resolution=resolution,
-                                    tile_bounds=tile_size,
-                                    nTiles=dry_run,
-                                    buffer=buffer,
-                                    remove_buffer=remove_buffer,
-                                    bounding_box=bounding_box) if copc \
+            # If the user wants to process a single file, it is split and get the number of tiles given by the user. Else, get the number of files we want to do the test execution (not serialized)
+            iterator = do.splitCloud(filepath=input,
+                                     output_dir=output,
+                                     json_pipeline=pipeline,
+                                     resolution=resolution,
+                                     tile_bounds=tile_size,
+                                     nTiles=dry_run,
+                                     buffer=buffer,
+                                     remove_buffer=remove_buffer,
+                                     bounding_box=bounding_box) if input_type == 'single' \
                 else file_manager.getFiles(input_directory=input, nFiles=dry_run)
             # Process pipelines
-            delayed = do.process_pipelines(output_dir=output, json_pipeline=pipeline, iterator=iterator, dry_run=dry_run, copc=copc)
+            delayed = do.process_pipelines(output_dir=output, json_pipeline=pipeline, iterator=iterator,
+                                           dry_run=dry_run, is_single=(input_type == 'single'))
 
     client = config_dask(n_workers=n_workers, threads_per_worker=threads_per_worker)
 
     click.echo('Parallelization started.\n')
     compute_and_graph(client=client, tasks=delayed, output_dir=output, diagnostic=diagnostic)
+
+    file_manager.getEmptyWeight(output_directory=output)
 
     click.echo('Job just finished.\n')
 
