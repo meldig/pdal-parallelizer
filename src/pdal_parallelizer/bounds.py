@@ -6,7 +6,6 @@ A bound is composed of :
 - Its minimal y-value (miny)
 - Its maximal x-value (maxx)
 - Its maximal y-value (maxy)
-- A resolution (resolution)
 - A srs (optional)
 """
 
@@ -18,12 +17,11 @@ def removeBuffer():
 
 
 class Bounds:
-    def __init__(self, minx, miny, maxx, maxy, resolution, srs=None):
+    def __init__(self, minx, miny, maxx, maxy, srs=None):
         self.minx = minx
         self.miny = miny
         self.maxx = maxx
         self.maxy = maxy
-        self.resolution = resolution
         self.srs = srs
         self.distX = self.maxx - self.minx
         self.distY = self.maxy - self.miny
@@ -49,7 +47,7 @@ class Bounds:
         assign = '{"type": "filters.assign"}'
         parsed = json.loads(assign)
         parsed['value'] = f'Classification=113 WHERE X > {self.maxx} || X < {self.minx} || Y > {self.maxy} || Y < {self.miny}'
-        return Bounds(minx, miny, maxx, maxy, self.resolution, self.srs), parsed
+        return Bounds(minx, miny, maxx, maxy, self.srs), parsed
 
     def __str__(self):
         return f"([{self.minx:.2f},{self.maxx:.2f}],[{self.miny:.2f},{self.maxy:.2f}])"
