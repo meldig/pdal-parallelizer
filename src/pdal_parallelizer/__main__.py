@@ -12,13 +12,13 @@ from dask import config as cfg
 from dask.distributed import LocalCluster, Client
 from distributed.diagnostics import MemorySampler
 from os import listdir
-import do
-import file_manager
+from . import do
+from . import file_manager
 from matplotlib import pyplot as plt
 
 
 @click.group()
-@click.version_option('1.10.13')
+@click.version_option('1.10.14')
 def main():
     """A simple parallelization tool for 3d point clouds treatment"""
     pass
