@@ -18,7 +18,7 @@ from matplotlib import pyplot as plt
 
 
 @click.group()
-@click.version_option('1.10.13')
+@click.version_option('1.10.14')
 def main():
     """A simple parallelization tool for 3d point clouds treatment"""
     pass
