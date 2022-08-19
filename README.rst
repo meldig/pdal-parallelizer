@@ -55,7 +55,7 @@ Options
 - -ts (--tile_size) : size of the tiles [default=(100, 100)] (-ts 100 100) (If a tile does not contain any points, it will be not processed) [default=(256,256)] (optional) (single file only)
 - -b (--buffer) : size of the buffer that will be applied to the tiles (in all 4 directions) (optional) (single file only)
 - -bb (--bounding_box) : coordinates of the bounding box you want to process (minx miny maxx maxy) (optional) (single file only)
-- -rb (--remove_buffer) : this flag indicate you want to remove the buffer when your tiles are written (optional) (single file only)
+- -rb (--remove_buffer) : this flag indicate you want to remove the buffer when your tiles are written. If you choose not to delete the buffer, it will be assigned class 113. (optional) (single file only)
 - -dr (--dry_run) : number of files to execute the test [default=None]
 - -d (--diagnostic) : get a graph of the memory usage during the execution (optional)
 
