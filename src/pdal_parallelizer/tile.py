@@ -32,7 +32,7 @@ class Tile:
         self.remove_buffer = remove_buffer
 
         if self.buffer:
-            self.bounds_without_buffer, self.bounds = bounds.buffer(self.buffer)
+            self.bounds_without_buffer, self.bounds, self.assign = bounds.buffer(self.buffer)
         else:
             self.bounds = bounds
 
@@ -50,9 +50,6 @@ class Tile:
         with open(self.json_pipeline, 'r') as pipeline:
             p = json.load(pipeline)
 
-            if self.remove_buffer:
-                p.insert(len(p) - 1, bounds.removeBuffer(self.bounds_without_buffer))
-
             # Create the name of the temp file associated to the pipeline
             temp_name = 'temp__' + self.getName()
             output_filename = f'{output_dir}/{self.getName()}'
@@ -61,6 +58,12 @@ class Tile:
             writer = list(filter(lambda x: x['type'].startswith('writers'), p))
             # Get the extension for the output
             extension = '.' + writer[0]['type'].split('.')[1] + '.las' if writer[0]['type'].split('.')[1] == 'copc' else '.' + writer[0]['type'].split('.')[1]
+
+            if self.buffer:
+                if writer[0]['type'].split('.')[1] in ['las', 'laz', 'copc']:
+                    p.insert(1, self.assign)
+            if self.remove_buffer:
+                p.insert(len(p) - 1, bounds.removeBuffer(self.bounds_without_buffer))
 
             # The pipeline must contains a reader AND a writer
             if not reader:

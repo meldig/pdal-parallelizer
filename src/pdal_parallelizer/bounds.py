@@ -47,7 +47,10 @@ class Bounds:
             maxx = self.maxx + buffer
             maxy = self.maxy + buffer
 
-        return self, Bounds(minx, miny, maxx, maxy, self.srs)
+        assign = '{"type": "filters.assign"}'
+        parsed = json.loads(assign)
+        parsed['value'] = f'ClassFlags = 2 WHERE X > {self.maxx} || X < {self.minx} || Y > {self.maxy} || Y < {self.miny}'
+        return self, Bounds(minx, miny, maxx, maxy, self.srs), parsed
 
     def __str__(self):
         return f"([{self.minx:.2f},{self.maxx:.2f}],[{self.miny:.2f},{self.maxy:.2f}])"
