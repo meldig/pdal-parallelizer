@@ -57,7 +57,6 @@ def compute_and_graph(client, tasks, output_dir, diagnostic):
 @click.option('-dr', '--dry_run', required=False, type=int)
 @click.option('-d', '--diagnostic', is_flag=True, required=False)
 @click.option('-it', '--input_type', required=True, type=click.Choice(['single', 'dir']))
-@click.option('-r', '--resolution', required=False, type=int, default=20000)
 @click.option('-ts', '--tile_size', required=False, nargs=2, type=int, default=(256, 256))
 @click.option('-b', '--buffer', required=False, type=int)
 @click.option('-rb', '--remove_buffer', is_flag=True, required=False)
@@ -77,7 +76,6 @@ def process_pipelines(**kwargs):
     dry_run = kwargs.get('dry_run')
     diagnostic = kwargs.get('diagnostic')
     input_type = kwargs.get('input_type')
-    resolution = kwargs.get('resolution')
     tile_size = kwargs.get('tile_size')
     buffer = kwargs.get('buffer')
     remove_buffer = kwargs.get('remove_buffer')
@@ -99,7 +97,6 @@ def process_pipelines(**kwargs):
             iterator = do.splitCloud(filepath=input,
                                      output_dir=output,
                                      json_pipeline=pipeline,
-                                     resolution=resolution,
                                      tile_bounds=tile_size,
                                      buffer=buffer,
                                      remove_buffer=remove_buffer,
@@ -113,7 +110,6 @@ def process_pipelines(**kwargs):
             iterator = do.splitCloud(filepath=input,
                                      output_dir=output,
                                      json_pipeline=pipeline,
-                                     resolution=resolution,
                                      tile_bounds=tile_size,
                                      nTiles=dry_run,
                                      buffer=buffer,

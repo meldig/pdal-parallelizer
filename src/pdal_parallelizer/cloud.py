@@ -3,7 +3,6 @@ Cloud class.
 
 A Cloud is composed of :
 - Its path (filepath)
-- Its resolution (resolution)
 - Its limits (bounds)
 """
 
@@ -20,7 +19,7 @@ def crop(bounds):
 
 
 class Cloud:
-    def __init__(self, filepath, resolution, bounds=None):
+    def __init__(self, filepath, bounds=None):
         self.filepath = filepath
         self.info = self.compute_quickinfo(bounds)
 
@@ -40,7 +39,7 @@ class Cloud:
             )
 
         # Create bounds for the cloud
-        self.bounds = Bounds(minx, miny, maxx, maxy, resolution)
+        self.bounds = Bounds(minx, miny, maxx, maxy)
 
     # Get the number of points in the cloud
     def getCount(self):

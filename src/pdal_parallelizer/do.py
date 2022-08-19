@@ -67,14 +67,12 @@ def process_pipelines(output_dir, json_pipeline, iterator, temp_dir=None, dry_ru
     return delayedPipelines
 
 
-def splitCloud(filepath, output_dir, json_pipeline, resolution, tile_bounds, nTiles=None, buffer=None, remove_buffer=False, bounding_box=None):
+def splitCloud(filepath, output_dir, json_pipeline, tile_bounds, nTiles=None, buffer=None, remove_buffer=False, bounding_box=None):
     """Split the cloud in many tiles"""
     # Create a cloud object
-    c = cloud.Cloud(filepath, resolution, bounds=bounding_box)
-    # Set its bounds resolution
-    c.bounds.resolution = resolution
+    c = cloud.Cloud(filepath, bounds=bounding_box)
     # Create a tile the size of the cloud
-    t = tile.Tile(filepath=c.filepath, output_dir=output_dir, json_pipeline=json_pipeline, bounds=c.bounds, buffer=buffer, remove_buffer=remove_buffer, cloud_object=c, cloud_bounds=bounding_box)
+    t = tile.Tile(filepath=c.filepath, output_dir=output_dir, json_pipeline=json_pipeline, bounds=c.bounds, buffer=buffer, remove_buffer=remove_buffer, cloud_object=c)
     # Split the tile in small parts of given sizes
     return t.split(tile_bounds[0], tile_bounds[1], nTiles)
 

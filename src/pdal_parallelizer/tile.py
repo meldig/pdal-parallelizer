@@ -98,7 +98,7 @@ class Tile:
 
         while current_maxx < self.bounds.maxx and current_maxy < self.bounds.maxy and (cpt < nTiles if nTiles else True):
             # Create the bounds for the small tile
-            b = bounds.Bounds(current_minx, current_miny, current_maxx, current_maxy, self.bounds.resolution)
+            b = bounds.Bounds(current_minx, current_miny, current_maxx, current_maxy)
             # Create it's name (minx_miny)
             name = str(int(b.minx)) + '_' + str(int(b.miny))
             # Create the tile
