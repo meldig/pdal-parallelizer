@@ -48,7 +48,7 @@ Options
 .................................................
 
 - -c (--config) : path of your config file.
-- -it (--input_type) : this option indicates whether you are processing a single file or a list of files [single, list]
+- -it (--input_type) : this option indicates whether you are processing a single file or a list of files [single, dir]
 - -nw (--n_workers) : number of cores you want for processing [default=3]
 - -tpw (--threads_per_worker) : number of threads for each worker [default=1]
 - -r (--resolution) : resolution of the tiles [default=20000] (optional) (single file only)
