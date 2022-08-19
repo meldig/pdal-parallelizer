@@ -51,7 +51,6 @@ Options
 - -it (--input_type) : this option indicates whether you are processing a single file or a list of files [single, dir]
 - -nw (--n_workers) : number of cores you want for processing [default=3]
 - -tpw (--threads_per_worker) : number of threads for each worker [default=1]
-- -r (--resolution) : resolution of the tiles [default=20000] (optional) (single file only)
 - -ts (--tile_size) : size of the tiles [default=(100, 100)] (-ts 100 100) (If a tile does not contain any points, it will be not processed) [default=(256,256)] (optional) (single file only)
 - -b (--buffer) : size of the buffer that will be applied to the tiles (in all 4 directions) (optional) (single file only)
 - -rb (--remove_buffer) : this flag indicate you want to remove the buffer when your tiles are written. If you choose not to delete the buffer, it will be assigned class 113. (optional) (single file only)
@@ -60,7 +59,7 @@ Options
 - -d (--diagnostic) : get a graph of the memory usage during the execution (optional)
 
 If you specify ``-it single``, the input value of the config file will contains the path of your file, no longer the path of your directory of inputs.
-The -r, -ts, -b, -bb and -rb options are related to single file processing. So if you want to process a list of files, you don't have to specify these.
+The -ts, -b, -bb and -rb options are related to single file processing. So if you want to process a list of files, you don't have to specify these.
 
 Dry run
 =======
