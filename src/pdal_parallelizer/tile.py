@@ -13,8 +13,8 @@ import sys
 import pdal
 import json
 import os
-from . import cloud
-from . import bounds
+import cloud
+import bounds
 
 
 class Tile:
@@ -32,7 +32,7 @@ class Tile:
         self.remove_buffer = remove_buffer
 
         if self.buffer:
-            self.bounds, self.assign = bounds.buffer(self.buffer)
+            self.bounds_without_buffer, self.bounds = bounds.buffer(self.buffer)
         else:
             self.bounds = bounds
 
@@ -50,13 +50,8 @@ class Tile:
         with open(self.json_pipeline, 'r') as pipeline:
             p = json.load(pipeline)
 
-            # If there is a buffer
-            if self.buffer:
-                # Assign the class 113 to it by adding an assign filter to the pipeline
-                p.insert(1, self.assign)
-                # If the user wants to remove the buffer, it is removed by adding a range step to the pipeline
-                if self.remove_buffer:
-                    p.insert(len(p) - 1, bounds.removeBuffer())
+            if self.remove_buffer:
+                p.insert(len(p) - 1, bounds.removeBuffer(self.bounds_without_buffer))
 
             # Create the name of the temp file associated to the pipeline
             temp_name = 'temp__' + self.getName()
