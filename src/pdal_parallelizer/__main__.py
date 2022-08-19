@@ -18,7 +18,7 @@ from matplotlib import pyplot as plt
 
 
 @click.group()
-@click.version_option('1.9.12')
+@click.version_option('1.9.13')
 def main():
     """A simple parallelization tool for 3d point clouds treatment"""
     pass
@@ -56,7 +56,7 @@ def compute_and_graph(client, tasks, output_dir, diagnostic):
 @click.option('-tpw', '--threads_per_worker', required=False, type=int, default=1)
 @click.option('-dr', '--dry_run', required=False, type=int)
 @click.option('-d', '--diagnostic', is_flag=True, required=False)
-@click.option('-it', '--input_type', required=True, type=click.Choice(['single', 'list']))
+@click.option('-it', '--input_type', required=True, type=click.Choice(['single', 'dir']))
 @click.option('-r', '--resolution', required=False, type=int, default=20000)
 @click.option('-ts', '--tile_size', required=False, nargs=2, type=int, default=(256, 256))
 @click.option('-b', '--buffer', required=False, type=int)

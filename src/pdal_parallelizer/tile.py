@@ -18,7 +18,7 @@ from . import bounds
 
 
 class Tile:
-    def __init__(self, filepath, output_dir, json_pipeline, name=None, bounds=None, buffer=None, remove_buffer=False, cloud_object=None, cloud_bounds=None):
+    def __init__(self, filepath, output_dir, json_pipeline, name=None, bounds=None, buffer=None, remove_buffer=False, cloud_object=None):
         self.filepath = filepath
         self.output_dir = output_dir
         self.json_pipeline = json_pipeline
