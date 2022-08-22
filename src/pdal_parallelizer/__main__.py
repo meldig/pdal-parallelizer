@@ -12,8 +12,8 @@ from dask import config as cfg
 from dask.distributed import LocalCluster, Client
 from distributed.diagnostics import MemorySampler
 from os import listdir
-from . import do
-from . import file_manager
+import do
+import file_manager
 from matplotlib import pyplot as plt
 
 
@@ -48,7 +48,6 @@ def compute_and_graph(client, tasks, output_dir, diagnostic):
         plt.savefig(output_dir + '/memory-usage.png')
     else:
         dask.compute(*tasks)
-
 
 @main.command()
 @click.option('-c', '--config', required=True, type=click.Path(exists=True))
