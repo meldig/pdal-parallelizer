@@ -15,6 +15,7 @@ from os import listdir
 import do
 import file_manager
 from matplotlib import pyplot as plt
+import gc
 
 
 @click.group()
@@ -26,7 +27,6 @@ def main():
 
 def config_dask(n_workers, threads_per_worker):
     """Make some configuration to avoid workers errors due to heartbeat or timeout problems. Set the number of cores to process the pipelines"""
-
     timeout = input('After how long of inactivity do you want to kill your worker (timeout)\n')
 
     cfg.set({'interface': 'lo'})
@@ -123,6 +123,9 @@ def process_pipelines(**kwargs):
 
     click.echo('Parallelization started.\n')
     compute_and_graph(client=client, tasks=delayed, output_dir=output, diagnostic=diagnostic)
+
+    # At the end, collect the unmanaged memory for all the workers
+    client.run(gc.collect)
 
     file_manager.getEmptyWeight(output_directory=output)
 
