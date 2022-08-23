@@ -18,16 +18,22 @@ def crop(bounds):
     return parsed
 
 
+def addClassFlags():
+    ferry = '{"type": "filters.ferry", "dimensions": "=>ClassFlags"}'
+    return json.loads(ferry)
+
+
 class Cloud:
     def __init__(self, filepath, bounds=None):
         self.filepath = filepath
-        self.info = self.compute_quickinfo(bounds)
+        self.info = self.compute_quickinfo()
+        self.classFlags = self.hasClassFlags()
 
         # Get the cloud information to set its bounds
         if bounds:
             minx, miny, maxx, maxy = bounds
         else:
-            bounds_dict = self.info['stats']['bbox']['native']['bbox']
+            bounds_dict = self.info['summary']['bounds']
             minx, miny, = (
                 bounds_dict['minx'],
                 bounds_dict['miny']
@@ -46,16 +52,21 @@ class Cloud:
         return self.info['num_points']
     count = property(getCount)
 
-    def compute_quickinfo(self, bounds):
+    def compute_quickinfo(self):
         """Returns some information about the cloud."""
         # Get the cloud information
-
-        pdal_info = subprocess.run(['pdal', 'info', self.filepath],
+        pdal_info = subprocess.run(['pdal', 'info', self.filepath, '--summary'],
                                    stderr=subprocess.PIPE,
                                    stdout=subprocess.PIPE)
         info = json.loads(pdal_info.stdout.decode())
 
         return info
+
+    def hasClassFlags(self):
+        """Check if the cloud has the ClassFlags dimension"""
+        info = self.compute_quickinfo()
+        dimensions = info['summary']['dimensions']
+        return 'ClassFlags' in dimensions
 
     def __str__(self):
         return f'Cloud - {self.bounds}'

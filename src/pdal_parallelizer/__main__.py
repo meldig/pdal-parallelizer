@@ -15,10 +15,11 @@ from os import listdir
 from . import do
 from . import file_manager
 from matplotlib import pyplot as plt
+import gc
 
 
 @click.group()
-@click.version_option('1.10.14')
+@click.version_option('1.10.15')
 def main():
     """A simple parallelization tool for 3d point clouds treatment"""
     pass
@@ -26,7 +27,6 @@ def main():
 
 def config_dask(n_workers, threads_per_worker):
     """Make some configuration to avoid workers errors due to heartbeat or timeout problems. Set the number of cores to process the pipelines"""
-
     timeout = input('After how long of inactivity do you want to kill your worker (timeout)\n')
 
     cfg.set({'interface': 'lo'})
@@ -48,7 +48,6 @@ def compute_and_graph(client, tasks, output_dir, diagnostic):
         plt.savefig(output_dir + '/memory-usage.png')
     else:
         dask.compute(*tasks)
-
 
 @main.command()
 @click.option('-c', '--config', required=True, type=click.Path(exists=True))
@@ -124,6 +123,9 @@ def process_pipelines(**kwargs):
 
     click.echo('Parallelization started.\n')
     compute_and_graph(client=client, tasks=delayed, output_dir=output, diagnostic=diagnostic)
+
+    # At the end, collect the unmanaged memory for all the workers
+    client.run(gc.collect)
 
     file_manager.getEmptyWeight(output_directory=output)
 

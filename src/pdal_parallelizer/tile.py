@@ -36,8 +36,7 @@ class Tile:
         else:
             self.bounds = bounds
 
-        if cloud_object:
-            self.cloud = cloud_object
+        self.cloud = cloud_object
 
     def getName(self):
         return self.name
@@ -59,11 +58,21 @@ class Tile:
             # Get the extension for the output
             extension = '.' + writer[0]['type'].split('.')[1] + '.las' if writer[0]['type'].split('.')[1] == 'copc' else '.' + writer[0]['type'].split('.')[1]
 
+            # If there is a buffer
             if self.buffer:
+                # If the writer is 'writers.copc' or 'writer.laz' or 'writers.copc'
                 if writer[0]['type'].split('.')[1] in ['las', 'laz', 'copc']:
+                    # Insert the filter to assign the wittheld flag to the buffer
                     p.insert(1, self.assign)
             if self.remove_buffer:
+                # Remove the buffer
                 p.insert(len(p) - 1, bounds.removeBuffer(self.bounds_without_buffer))
+
+            if self.cloud:
+                # If there is the ferry filter attribute in the tile instance
+                if not self.cloud.classFlags:
+                    # Insert the filter to add the ClassFlags dimension
+                    p.insert(1, cloud.addClassFlags())
 
             # The pipeline must contains a reader AND a writer
             if not reader:
@@ -100,7 +109,7 @@ class Tile:
             # Create it's name (minx_miny)
             name = str(int(b.minx)) + '_' + str(int(b.miny))
             # Create the tile
-            t = Tile(filepath=self.filepath, output_dir=self.output_dir, json_pipeline=self.json_pipeline, name=name, bounds=b, buffer=self.buffer, remove_buffer=self.remove_buffer)
+            t = Tile(filepath=self.filepath, output_dir=self.output_dir, json_pipeline=self.json_pipeline, name=name, bounds=b, buffer=self.buffer, remove_buffer=self.remove_buffer, cloud_object=self.cloud)
             # Add the width given by the user to shift right to create a new tile
             current_minx += distTileX
             current_maxx += distTileX
