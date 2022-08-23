@@ -18,11 +18,10 @@ import bounds
 
 
 class Tile:
-    def __init__(self, filepath, output_dir, json_pipeline, cloud_object, name=None, bounds=None, buffer=None, remove_buffer=False):
+    def __init__(self, filepath, output_dir, json_pipeline, name=None, bounds=None, buffer=None, remove_buffer=False, cloud_object=None):
         self.filepath = filepath
         self.output_dir = output_dir
         self.json_pipeline = json_pipeline
-        self.cloud = cloud_object
 
         if name:
             self.name = name
@@ -36,6 +35,8 @@ class Tile:
             self.bounds_without_buffer, self.bounds, self.assign = bounds.buffer(self.buffer)
         else:
             self.bounds = bounds
+
+        self.cloud = cloud_object
 
     def getName(self):
         return self.name
@@ -67,10 +68,11 @@ class Tile:
                 # Remove the buffer
                 p.insert(len(p) - 1, bounds.removeBuffer(self.bounds_without_buffer))
 
-            # If there is the ferry filter attribute in the tile instance
-            if not self.cloud.classFlags:
-                # Insert the filter to add the ClassFlags dimension
-                p.insert(1, cloud.addClassFlags())
+            if self.cloud:
+                # If there is the ferry filter attribute in the tile instance
+                if not self.cloud.classFlags:
+                    # Insert the filter to add the ClassFlags dimension
+                    p.insert(1, cloud.addClassFlags())
 
             # The pipeline must contains a reader AND a writer
             if not reader:
@@ -107,7 +109,7 @@ class Tile:
             # Create it's name (minx_miny)
             name = str(int(b.minx)) + '_' + str(int(b.miny))
             # Create the tile
-            t = Tile(filepath=self.filepath, output_dir=self.output_dir, json_pipeline=self.json_pipeline, cloud_object=self.cloud, name=name, bounds=b, buffer=self.buffer, remove_buffer=self.remove_buffer)
+            t = Tile(filepath=self.filepath, output_dir=self.output_dir, json_pipeline=self.json_pipeline, name=name, bounds=b, buffer=self.buffer, remove_buffer=self.remove_buffer, cloud_object=self.cloud)
             # Add the width given by the user to shift right to create a new tile
             current_minx += distTileX
             current_maxx += distTileX
