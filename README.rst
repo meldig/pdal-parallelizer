@@ -91,4 +91,6 @@ At the end of each execution, you can get a graph of the memory usage. This may 
 Requirements
 ...........................................
 
+Python 3.9+ (eg conda install -c anaconda python)
+
 PDAL 2.4+ (eg `conda install -c conda-forge pdal`)
