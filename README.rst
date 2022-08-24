@@ -41,7 +41,7 @@ Processing pipelines
 
 .. code-block:: 
 
-  process-pipelines -c <config file> -it list -nw <n_workers> -tpw <threads_per_worker> -dr <number of files> -d
+  process-pipelines -c <config file> -it dir -nw <n_workers> -tpw <threads_per_worker> -dr <number of files> -d
   process-pipelines -c <config file> -it single -nw <n_workers> -tpw <threads_per_worker> -ts <tiles size> -d -dr <number of tiles> -b <buffer size>
 
 Options
