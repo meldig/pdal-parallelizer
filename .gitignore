@@ -5,4 +5,5 @@ src/pdal_parallelizer/temp
 build
 dask-worker-space
 dist
-pdal_parallelizer.egg-info
+pdal_parallelizer.egg-infols
+.idea
