@@ -1,10 +1,10 @@
 import unittest
 
-import pdal_parallelizer.bounds as bounds
-import pdal_parallelizer.cloud as cloud
-import pdal_parallelizer.do as do
-import pdal_parallelizer.tile as tile
-import pdal_parallelizer.file_manager as file_manager
+import src.pdal_parallelizer.bounds as bounds
+import src.pdal_parallelizer.cloud as cloud
+import src.pdal_parallelizer.do as do
+import src.pdal_parallelizer.tile as tile
+import src.pdal_parallelizer.file_manager as file_manager
 import pdal
 import json
 import os
