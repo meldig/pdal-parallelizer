@@ -12,8 +12,8 @@ from dask import config as cfg
 from dask.distributed import LocalCluster, Client
 from distributed.diagnostics import MemorySampler
 from os import listdir
-from . import do
-from . import file_manager
+import do
+import file_manager
 from matplotlib import pyplot as plt
 import gc
 
@@ -105,7 +105,8 @@ def process_pipelines(**kwargs):
             delayed = do.process_pipelines(output_dir=output, json_pipeline=pipeline, temp_dir=temp, iterator=iterator,
                                            is_single=(input_type == 'single'))
         else:
-            # If the user wants to process a single file, it is split and get the number of tiles given by the user. Else, get the number of files we want to do the test execution (not serialized)
+            # If the user wants to process a single file, it is split and get the number of tiles given by the user.
+            # Else, get the number of files we want to do the test execution (not serialized)
             iterator = do.splitCloud(filepath=input,
                                      output_dir=output,
                                      json_pipeline=pipeline,

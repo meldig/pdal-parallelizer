@@ -8,7 +8,7 @@ A Cloud is composed of :
 
 import subprocess
 import json
-from .bounds import Bounds
+from bounds import Bounds
 
 
 def crop(bounds):
@@ -31,7 +31,7 @@ class Cloud:
 
         # Get the cloud information to set its bounds
         if bounds:
-            minx, miny, maxx, maxy = bounds
+            minx, miny, maxx, maxy = bounds.minx, bounds.miny, bounds.maxx, bounds.maxy
         else:
             bounds_dict = self.info['summary']['bounds']
             minx, miny, = (
@@ -49,8 +49,7 @@ class Cloud:
 
     # Get the number of points in the cloud
     def getCount(self):
-        return self.info['num_points']
-    count = property(getCount)
+        return self.info['summary']['num_points']
 
     def compute_quickinfo(self):
         """Returns some information about the cloud."""

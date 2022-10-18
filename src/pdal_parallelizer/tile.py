@@ -13,8 +13,8 @@ import sys
 import pdal
 import json
 import os
-from . import cloud
-from . import bounds
+import cloud
+import bounds
 
 
 class Tile:
@@ -74,7 +74,7 @@ class Tile:
                     # Insert the filter to add the ClassFlags dimension
                     p.insert(1, cloud.addClassFlags())
 
-            # The pipeline must contains a reader AND a writer
+            # The pipeline must contain a reader AND a writer
             if not reader:
                 sys.exit("Please add a reader to your pipeline.")
             elif not writer:
@@ -103,10 +103,10 @@ class Tile:
         # If it's a dry run, 'cpt' will count the number of tiles created
         cpt = 0
 
-        while current_maxx < self.bounds.maxx and current_maxy < self.bounds.maxy and (cpt < nTiles if nTiles else True):
+        while current_maxx <= self.bounds.maxx and current_maxy <= self.bounds.maxy and (cpt < nTiles if nTiles else True):
             # Create the bounds for the small tile
             b = bounds.Bounds(current_minx, current_miny, current_maxx, current_maxy)
-            # Create it's name (minx_miny)
+            # Create its name (minx_miny)
             name = str(int(b.minx)) + '_' + str(int(b.miny))
             # Create the tile
             t = Tile(filepath=self.filepath, output_dir=self.output_dir, json_pipeline=self.json_pipeline, name=name, bounds=b, buffer=self.buffer, remove_buffer=self.remove_buffer, cloud_object=self.cloud)
@@ -116,7 +116,7 @@ class Tile:
 
             # If the current maxx value exceeds the right edge of the cloud
             if current_maxx >= self.cloud.bounds.maxx:
-                # And if there is a piece of cloud non processed
+                # And if there is a piece of cloud non-processed
                 if t.bounds.maxx < self.cloud.bounds.maxx:
                     # Calculate the offset distance
                     dist = self.cloud.bounds.maxx - t.bounds.maxx
@@ -132,7 +132,7 @@ class Tile:
 
             # If the current maxy value exceeds the top edge of the cloud
             if current_maxy > self.cloud.bounds.maxy:
-                # And if there is a piece of cloud non processed
+                # And if there is a piece of cloud non-processed
                 if t.bounds.maxy < self.cloud.bounds.maxy:
                     # Calculate the offset distance
                     dist = self.cloud.bounds.maxy - t.bounds.maxy

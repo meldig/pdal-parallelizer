@@ -1,13 +1,13 @@
 """
 Do file.
 
-Responsible of all the executions, serializations or creations of object we need to process the pipelines.
+Responsible for all the executions, serializations or creations of object we need to process the pipelines.
 """
 
 import dask
 from dask.distributed import Lock
-from . import tile
-from . import cloud
+import tile
+import cloud
 import pickle
 import os
 
@@ -26,6 +26,7 @@ def process(pipeline, temp_dir=None):
             os.remove(temp_file)
         except FileNotFoundError:
             print('Trying to suppress ' + temp_dir + temp_file + ' but cannot found this file.')
+            raise FileNotFoundError
     # Don't need to get and suppress the temp file if it's a dry run
     else:
         pipeline[0].execute()
@@ -51,7 +52,8 @@ def process_pipelines(output_dir, json_pipeline, iterator, temp_dir=None, dry_ru
     delayedPipelines = []
     while True:
         try:
-            # If it's a cloud, 'next(iterator)' is a tile. Else, 'next(iterator)' is a filepath so a tile must be created
+            # If it's a cloud, 'next(iterator)' is a tile. Else, 'next(iterator)' is a filepath so a tile must be
+            # created
             t = next(iterator) if is_single else tile.Tile(next(iterator), output_dir, json_pipeline)
             p = t.pipeline(is_single)
             # If it's not a dry run, the pipeline must be serialized
