@@ -15,4 +15,4 @@ jobs:
           python-version: '3.x'
       - name: Run tests
         run: |
-          python test.py
+          python src/test.py
