@@ -1,6 +1,6 @@
 import unittest
 
-from .pdal_parallelizer import bounds
+from .src.pdal_parallelizer import bounds
 import src.pdal_parallelizer.cloud as cloud
 import src.pdal_parallelizer.do as do
 import src.pdal_parallelizer.tile as tile
