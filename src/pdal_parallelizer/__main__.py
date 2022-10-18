@@ -26,7 +26,8 @@ def main():
 
 
 def config_dask(n_workers, threads_per_worker):
-    """Make some configuration to avoid workers errors due to heartbeat or timeout problems. Set the number of cores to process the pipelines"""
+    """Make some configuration to avoid workers errors due to heartbeat or timeout problems. Set the number of cores
+    to process the pipelines """
     timeout = input('After how long of inactivity do you want to kill your worker (timeout)\n')
 
     cfg.set({'interface': 'lo'})
@@ -105,7 +106,8 @@ def process_pipelines(**kwargs):
             delayed = do.process_pipelines(output_dir=output, json_pipeline=pipeline, temp_dir=temp, iterator=iterator,
                                            is_single=(input_type == 'single'))
         else:
-            # If the user wants to process a single file, it is split and get the number of tiles given by the user. Else, get the number of files we want to do the test execution (not serialized)
+            # If the user wants to process a single file, it is split and get the number of tiles given by the user.
+            # Else, get the number of files we want to do the test execution (not serialized)
             iterator = do.splitCloud(filepath=input,
                                      output_dir=output,
                                      json_pipeline=pipeline,

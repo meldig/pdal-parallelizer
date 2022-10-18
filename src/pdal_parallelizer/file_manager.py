@@ -22,7 +22,8 @@ def getFiles(input_directory, nFiles=None):
             for f in listdir(input_directory):
                 yield join(input_directory, f)
         except NotADirectoryError:
-            sys.exit("The input attribute of your configuration file does not designate a directory. Maybe you are trying to process a single file ? Check your -it option.")
+            sys.exit("The input attribute of your configuration file does not designate a directory. Maybe you are "
+                     "trying to process a single file ? Check your -it option.")
     # If it's a dry run, only the biggest nFiles of the directory are returned
     else:
         try:
@@ -36,7 +37,8 @@ def getFiles(input_directory, nFiles=None):
             for i in range(nFiles):
                 yield filesSize[i][0]
         except NotADirectoryError:
-            sys.exit("The input attribute of your configuration file does not designate a directory. Maybe you are trying to process a single file ? Check your -it option.")
+            sys.exit("The input attribute of your configuration file does not designate a directory. Maybe you are "
+                     "trying to process a single file ? Check your -it option.")
 
 
 def getSerializedPipelines(temp_directory):
