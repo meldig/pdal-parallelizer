@@ -5,7 +5,7 @@ on: [push]
 jobs:
   test:
 
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
@@ -15,10 +15,9 @@ jobs:
           python-version: '3.x'
       - name: Install dependencies
         run: |
+          sudo apt -y install pdal
           python -m pip install --upgrade pip
-          pip install conda
-          conda install -c conda-forge pdal
-          pip install dask distributed pdal
+          pip install dask distributed
       - name: Run tests
         run: |
           python src/test.py
