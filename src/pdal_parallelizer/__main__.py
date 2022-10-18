@@ -12,8 +12,8 @@ from dask import config as cfg
 from dask.distributed import LocalCluster, Client
 from distributed.diagnostics import MemorySampler
 from os import listdir
-import do
-import file_manager
+from . import do
+from . import file_manager
 from matplotlib import pyplot as plt
 import gc
 
@@ -26,7 +26,8 @@ def main():
 
 
 def config_dask(n_workers, threads_per_worker):
-    """Make some configuration to avoid workers errors due to heartbeat or timeout problems. Set the number of cores to process the pipelines"""
+    """Make some configuration to avoid workers errors due to heartbeat or timeout problems. Set the number of cores
+    to process the pipelines """
     timeout = input('After how long of inactivity do you want to kill your worker (timeout)\n')
 
     cfg.set({'interface': 'lo'})

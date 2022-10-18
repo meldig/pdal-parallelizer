@@ -167,10 +167,6 @@ class TestFileManager(unittest.TestCase):
         result = file_manager.getSerializedPipelines("D:/data_unit_test/pdal-parallelizer/temp")
         self.assertGreater(len(list(result)), 0)
 
-    # def test_remove_empty_files(self):
-    #     result = file_manager.getEmptyWeight("D:/data_unit_test/pdal-parallelizer/empty")
-    #     self.assertEqual(len(os.listdir("D:/data_unit_test/pdal-parallelizer/empty")), 0)
-
 
 class TestTile(unittest.TestCase):
     t = tile.Tile("D:/data_unit_test/pdal-parallelizer/input/echantillon_10pts.laz",
