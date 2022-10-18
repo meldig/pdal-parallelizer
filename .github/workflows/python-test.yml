@@ -17,7 +17,7 @@ jobs:
         run: |
           sudo apt -y install pdal
           python -m pip install --upgrade pip
-          pip install dask distributed
+          pip install dask distributed pdal
       - name: Run tests
         run: |
           python src/test.py
