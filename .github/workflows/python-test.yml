@@ -5,7 +5,7 @@ on: [push]
 jobs:
   test:
 
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       - uses: actions/checkout@v3
@@ -15,9 +15,8 @@ jobs:
           python-version: '3.x'
       - name: Install dependencies
         run: |
-          sudo apt -y install pdal
           python -m pip install --upgrade pip
-          pip install dask distributed pdal
-      - name: Run tests
+          pip install pytest
+      - name: Test with pytest
         run: |
-          python src/test.py
+          pytest
