@@ -3,11 +3,9 @@ on: [push]
 
 jobs:
   miniconda:
-    name: Miniconda ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-        matrix:
-            os: ["ubuntu-latest", "windows-latest"]
+    name: Miniconda
+    runs-on: windows-latest
+
     steps:
       - uses: actions/checkout@v2
       - uses: conda-incubator/setup-miniconda@v2
@@ -20,13 +18,10 @@ jobs:
         run: |
           conda info
           conda list
-      - name: Lint
-        shell: bash -l {0}
-        run: |
-            conda install pdal
-            python -m pip install --upgrade pip
-            pip install dask distributed pdal
       - name: Run tests
         shell: bash -l {0}
         run: |
-            python src/test.py
+          conda install pdal
+          python -m pip install --upgrade pip
+          pip install dask distributed pdal
+          python src/test.py
