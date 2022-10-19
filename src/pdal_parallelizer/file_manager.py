@@ -30,7 +30,7 @@ def getFiles(input_directory, nFiles=None):
             # Get all the files
             files = [join(input_directory, f) for f in listdir(input_directory)]
             # Create tuples (filepath, filesize)
-            filesSize = [(join(input_directory, f), os.path.getsize(join(input_directory, f))) for f in files]
+            filesSize = [(join(input_directory, f), os.path.getsize(f)) for f in files]
             # Sort files in descending order
             filesSize.sort(key=lambda tup: tup[1], reverse=True)
             # Get the first nFiles
