@@ -20,4 +20,4 @@ jobs:
           pip install dask distributed
       - name: Run tests
         run: |
-          python tests/test.py
+          python src/test.py
