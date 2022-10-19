@@ -19,7 +19,7 @@ import gc
 
 
 @click.group()
-@click.version_option('1.10.17')
+@click.version_option('1.10.18')
 def main():
     """A simple parallelization tool for 3d point clouds treatment"""
     pass
