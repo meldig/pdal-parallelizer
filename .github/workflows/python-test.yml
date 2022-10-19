@@ -13,7 +13,7 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: test
-          environment-file: environment.yml
+          environment-file: D:\data_dev\pdal-parallelizer\environment.yml
           python-version: 3.8
           auto-activate-base: false
       - shell: bash -l {0}
