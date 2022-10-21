@@ -1,10 +1,10 @@
 import unittest
 
-from pdal_parallelizer import bounds
-from pdal_parallelizer import cloud
-from pdal_parallelizer import do
-from pdal_parallelizer import tile
-from pdal_parallelizer import file_manager
+from src.pdal_parallelizer import bounds
+from src.pdal_parallelizer import cloud
+from src.pdal_parallelizer import do
+from src.pdal_parallelizer import tile
+from src.pdal_parallelizer import file_manager
 import pdal
 import json
 import os
@@ -46,13 +46,13 @@ class TestBounds(unittest.TestCase):
 
 class TestCloud(unittest.TestCase):
     def test_getCount(self):
-        data = cloud.Cloud("../test/data/input/echantillon_10pts.laz")
+        data = cloud.Cloud("test/data/input/echantillon_10pts.laz")
         result = data.getCount()
         self.assertEqual(result, 10)
 
     def test_bounds(self):
         b = bounds.Bounds(10, 10, 20, 40)
-        data = cloud.Cloud("../test/data/input/echantillon_10pts.laz", b)
+        data = cloud.Cloud("test/data/input/echantillon_10pts.laz", b)
         result = data.bounds
         self.assertEqual(result.minx, b.minx)
         self.assertEqual(result.miny, b.miny)
@@ -60,13 +60,13 @@ class TestCloud(unittest.TestCase):
         self.assertEqual(result.maxy, b.maxy)
 
     def test_hasClassFlags(self):
-        data = cloud.Cloud("../test/data/input/echantillon_10pts.laz")
+        data = cloud.Cloud("test/data/input/echantillon_10pts.laz")
         result = data.hasClassFlags()
         self.assertTrue(result)
 
 
 class TestDo(unittest.TestCase):
-    with open("../test/data/pipeline.json", "r") as p:
+    with open("test/data/pipeline.json", "r") as p:
         pipeline = json.load(p)
     pipeline = [pdal.Pipeline(json.dumps(pipeline)), 'temp_name']
 
@@ -74,7 +74,7 @@ class TestDo(unittest.TestCase):
 
     def test_process(self):
         dask.compute(do.process(self.pipeline))
-        nb_files = len([name for name in os.listdir("../test/data/output")])
+        nb_files = len([name for name in os.listdir("test/data/output")])
         self.assertGreater(nb_files, 0)
 
     def test_process_exc(self):
@@ -83,26 +83,26 @@ class TestDo(unittest.TestCase):
 
     def test_serializePipeline(self):
         dask.compute(do.process(self.pipeline))
-        do.serializePipeline(self.pipeline, "../test/data/temp")
-        nb_files = len([name for name in os.listdir("../test/data/temp")])
+        do.serializePipeline(self.pipeline, "test/data/temp")
+        nb_files = len([name for name in os.listdir("test/data/temp")])
         self.assertGreater(nb_files, 0)
 
     def test_process_delete_serialized_pipeline(self):
-        do.serializePipeline(self.pipeline, "../test/data/temp")
-        nb_files_before = len([name for name in os.listdir("../test/data/temp")])
-        dask.compute(do.process(self.pipeline, "../test/data/temp"))
-        nb_files_after = len([name for name in os.listdir("../test/data/temp")])
+        do.serializePipeline(self.pipeline, "test/data/temp")
+        nb_files_before = len([name for name in os.listdir("test/data/temp")])
+        dask.compute(do.process(self.pipeline, "test/data/temp"))
+        nb_files_after = len([name for name in os.listdir("test/data/temp")])
         self.assertEqual(nb_files_before - 1, nb_files_after)
 
     def test_process_serialized_pipelines(self):
-        do.serializePipeline(self.pipeline, "../test/data/temp")
+        do.serializePipeline(self.pipeline, "test/data/temp")
         iterator = iter(self.pipeline[1])
-        delayed = do.process_serialized_pipelines("../test/data/temp", iterator)
+        delayed = do.process_serialized_pipelines("test/data/temp", iterator)
         self.assertGreater(len(delayed), 0)
 
     def test_process_pipelines_nodr_dir(self):
         iterator = iter([self.pipeline[1]])
-        delayed = do.process_pipelines("../test/data/output",
+        delayed = do.process_pipelines("test/data/output",
                                        "../test/data/pipeline.json",
                                        iterator,
                                        "../test/data/temp",
@@ -111,10 +111,10 @@ class TestDo(unittest.TestCase):
         self.assertGreater(len(delayed), 0)
 
     def test_process_pipelines_nodr_singlefile(self):
-        t = tile.Tile("../test/data/input/echantillon_10pts.laz",
+        t = tile.Tile("test/data/input/echantillon_10pts.laz",
                       "../test/data/output", "../test/data/pipeline.json")
         iterator = iter([t])
-        delayed = do.process_pipelines("../test/data/output",
+        delayed = do.process_pipelines("test/data/output",
                                        "../test/data/pipeline.json",
                                        iterator,
                                        "../test/data/temp",
@@ -124,7 +124,7 @@ class TestDo(unittest.TestCase):
 
     def test_process_pipelines_dr_dir(self):
         iterator = iter([self.pipeline[1]])
-        delayed = do.process_pipelines("../test/data/output",
+        delayed = do.process_pipelines("test/data/output",
                                        "../test/data/pipeline.json",
                                        iterator,
                                        "../test/data/temp",
@@ -133,10 +133,10 @@ class TestDo(unittest.TestCase):
         self.assertGreater(len(delayed), 0)
 
     def test_process_pipelines_dr_singlefile(self):
-        t = tile.Tile("../test/data/input/echantillon_10pts.laz",
+        t = tile.Tile("test/data/input/echantillon_10pts.laz",
                       "../test/data/output", "../test/data/pipeline.json")
         iterator = iter([t])
-        delayed = do.process_pipelines("../test/data/output",
+        delayed = do.process_pipelines("test/data/output",
                                        "../test/data/pipeline.json",
                                        iterator,
                                        "../test/data/temp",
@@ -146,7 +146,7 @@ class TestDo(unittest.TestCase):
         self.assertGreater(len(delayed), 0)
 
     def test_splitCloud(self):
-        result = do.splitCloud("../test/data/input/echantillon_10pts.laz",
+        result = do.splitCloud("test/data/input/echantillon_10pts.laz",
                                "../test/data/output",
                                "../test/data/pipeline.json",
                                (1000, 1000)
@@ -169,7 +169,7 @@ class TestFileManager(unittest.TestCase):
 
 
 class TestTile(unittest.TestCase):
-    t = tile.Tile("../test/data/input/echantillon_10pts.laz",
+    t = tile.Tile("test/data/input/echantillon_10pts.laz",
                   "../test/data/output",
                   "../test/data/pipeline.json",
                   bounds=bounds.Bounds(685019.31, 7047019.02, 685019.93, 7047019.98),
