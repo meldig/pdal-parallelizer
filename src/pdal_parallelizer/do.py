@@ -25,8 +25,7 @@ def process(pipeline, temp_dir=None):
             # Remove the temp file
             os.remove(temp_file)
         except FileNotFoundError:
-            print('Trying to suppress ' + temp_dir + temp_file + ' but cannot found this file.')
-            raise FileNotFoundError
+            pass
     # Don't need to get and suppress the temp file if it's a dry run
     else:
         pipeline[0].execute()
