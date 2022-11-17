@@ -9,7 +9,7 @@ import sys
 import click
 import dask
 from dask import config as cfg
-from dask.distributed import LocalCluster, Client
+from dask.distributed import LocalCluster, Client, progress
 from distributed.diagnostics import MemorySampler
 from os import listdir
 from . import do
@@ -19,7 +19,7 @@ import gc
 
 
 @click.group()
-@click.version_option('1.10.18')
+@click.version_option('1.10.19')
 def main():
     """A simple parallelization tool for 3d point clouds treatment"""
     pass
@@ -37,18 +37,6 @@ def config_dask(n_workers, threads_per_worker):
     client = Client(cluster)
     return client
 
-
-def compute_and_graph(client, tasks, output_dir, diagnostic):
-    """Compute all the pipelines and produce a memory usage graph if requested by the user"""
-
-    if diagnostic:
-        ms = MemorySampler()
-        with ms.sample(label='execution', client=client):
-            dask.compute(*tasks)
-        ms.plot()
-        plt.savefig(output_dir + '/memory-usage.png')
-    else:
-        dask.compute(*tasks)
 
 @main.command()
 @click.option('-c', '--config', required=True, type=click.Path(exists=True))
@@ -124,14 +112,27 @@ def process_pipelines(**kwargs):
     client = config_dask(n_workers=n_workers, threads_per_worker=threads_per_worker)
 
     click.echo('Parallelization started.\n')
-    compute_and_graph(client=client, tasks=delayed, output_dir=output, diagnostic=diagnostic)
+    # compute_and_graph(client=client, tasks=delayed, output_dir=output, diagnostic=diagnostic)
+
+    if diagnostic:
+        ms = MemorySampler()
+        with ms.sample(label='execution', client=client):
+            delayed = client.persist(delayed)
+            progress(delayed)
+            futures = client.compute(delayed)
+            client.gather(futures)
+        ms.plot()
+        plt.savefig(output + '/memory-usage.png')
+    else:
+        delayed = client.persist(delayed)
+        progress(delayed)
+        futures = client.compute(delayed)
+        client.gather(futures)
 
     # At the end, collect the unmanaged memory for all the workers
     client.run(gc.collect)
 
     file_manager.getEmptyWeight(output_directory=output)
-
-    click.echo('Job just finished.\n')
 
 
 if __name__ == "__main__":
