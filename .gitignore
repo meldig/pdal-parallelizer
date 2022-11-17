@@ -7,3 +7,5 @@ dask-worker-space
 dist
 pdal_parallelizer.egg-infols
 .idea
+./test
+./test/*
