@@ -1,8 +1,0 @@
-[{
-	"type": "readers.las",
-	"filename": "D:/data_unit_test/pdal-parallelizer/input/echantillon_10pts.laz"
-},
-{
-	"type": "writers.las",
-	"filename": "D:/data_unit_test/pdal-parallelizer/output/output.laz"
-}]
