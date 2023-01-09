@@ -13,6 +13,13 @@ Using Pip
 .. code-block::
 
   pip install pdal-parallelizer
+
+Using Conda
+................................................
+
+.. code-block::
+
+  conda install -c clementalba pdal-parallelizer
   
 GitHub
 ................................................
@@ -88,7 +95,7 @@ Diagnostic
 
 At the end of each execution, you can get a graph of the memory usage. This may be interesting to analyze after a dry run. This graph will be in the output directory you specify in the config file.
 
-Requirements
+Requirements (only for pip installs)
 ...........................................
 
 Python 3.9+ (eg conda install -c anaconda python)
