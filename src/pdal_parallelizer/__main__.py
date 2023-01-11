@@ -1,34 +1,20 @@
-"""
-Main file.
-
-Contains the process-pipelines function you call in command line
-"""
-
 import json
-import sys
 import click
-import dask
 from dask import config as cfg
 from dask.distributed import LocalCluster, Client, progress
 from distributed.diagnostics import MemorySampler
 from os import listdir
-from . import do
-from . import file_manager
+from src.pdal_parallelizer import do
+from src.pdal_parallelizer import file_manager
 from matplotlib import pyplot as plt
 import gc
 
 
-@click.group()
-@click.version_option('1.10.19')
-def main():
-    """A simple parallelization tool for 3d point clouds treatment"""
-    pass
-
-
-def config_dask(n_workers, threads_per_worker):
+def config_dask(n_workers, threads_per_worker, timeout):
     """Make some configuration to avoid workers errors due to heartbeat or timeout problems. Set the number of cores
     to process the pipelines """
-    timeout = input('After how long of inactivity do you want to kill your worker (timeout)\n')
+    if not timeout:
+        timeout = input('After how long of inactivity do you want to kill your worker (timeout)\n')
 
     cfg.set({'interface': 'lo'})
     cfg.set({'distributed.scheduler.worker-ttl': None})
@@ -38,41 +24,43 @@ def config_dask(n_workers, threads_per_worker):
     return client
 
 
-@main.command()
-@click.option('-c', '--config', required=True, type=click.Path(exists=True))
-@click.option('-nw', '--n_workers', required=False, type=int, default=3)
-@click.option('-tpw', '--threads_per_worker', required=False, type=int, default=1)
-@click.option('-dr', '--dry_run', required=False, type=int)
-@click.option('-d', '--diagnostic', is_flag=True, required=False)
-@click.option('-it', '--input_type', required=True, type=click.Choice(['single', 'dir']))
-@click.option('-ts', '--tile_size', required=False, nargs=2, type=int, default=(256, 256))
-@click.option('-b', '--buffer', required=False, type=int)
-@click.option('-rb', '--remove_buffer', is_flag=True, required=False)
-@click.option('-bb', '--bounding_box', required=False, nargs=4, type=float)
-def process_pipelines(**kwargs):
-    """Processing pipelines on many points cloud in parallel"""
-    with open(kwargs.get('config'), 'r') as c:
-        config = json.load(c)
-        input = config.get('input')
-        output = config.get('output')
-        temp = config.get('temp')
-        pipeline = config.get('pipeline')
+def process_pipelines(
+        config,
+        input_type,
+        timeout,
+        n_workers=3,
+        threads_per_worker=1,
+        dry_run=None,
+        diagnostic=None,
+        tile_size=(256, 256),
+        buffer=None,
+        remove_buffer=None,
+        bounding_box=None,
+):
+    with open(config, 'r') as c:
+        config_file = json.load(c)
+        input = config_file.get('input')
+        output = config_file.get('output')
+        temp = config_file.get('temp')
+        pipeline = config_file.get('pipeline')
 
-    # Get all the options
-    n_workers = kwargs.get('n_workers')
-    threads_per_worker = kwargs.get('threads_per_worker')
-    dry_run = kwargs.get('dry_run')
-    diagnostic = kwargs.get('diagnostic')
-    input_type = kwargs.get('input_type')
-    tile_size = kwargs.get('tile_size')
-    buffer = kwargs.get('buffer')
-    remove_buffer = kwargs.get('remove_buffer')
-    bounding_box = kwargs.get('bounding_box')
+        # Assertions
+        assert config is str
+        assert input_type == "single" or "dir"
+        assert timeout is int
+        assert n_workers is int
+        assert threads_per_worker is int
+        assert dry_run is int
+        assert diagnostic is bool
+        assert tile_size is tuple
+        assert buffer is int
+        assert remove_buffer is bool
 
     # If there is some temp file in the temp directory, these are processed
     if len(listdir(temp)) != 0:
         click.echo(
-            'Something went wrong during previous execution, there is some temp files in your temp directory.\n Beginning of the execution\n')
+            'Something went wrong during previous execution, there is some temp files in your temp directory.\n'
+            'Beginning of the execution\n')
         # Get all the deserialized pipelines
         pipeline_iterator = file_manager.getSerializedPipelines(temp_directory=temp)
         # Process pipelines
@@ -109,7 +97,7 @@ def process_pipelines(**kwargs):
             delayed = do.process_pipelines(output_dir=output, json_pipeline=pipeline, iterator=iterator,
                                            dry_run=dry_run, is_single=(input_type == 'single'))
 
-    client = config_dask(n_workers=n_workers, threads_per_worker=threads_per_worker)
+    client = config_dask(n_workers=n_workers, threads_per_worker=threads_per_worker, timeout=timeout)
 
     click.echo('Parallelization started.\n')
     # compute_and_graph(client=client, tasks=delayed, output_dir=output, diagnostic=diagnostic)
@@ -135,8 +123,7 @@ def process_pipelines(**kwargs):
     file_manager.getEmptyWeight(output_directory=output)
 
 
-if __name__ == "__main__":
-    args = sys.argv
-    if "--help" in args or len(args) == 1:
-        print("pdal_parallelizer")
-    main()
+if __name__ == '__main__':
+    process_pipelines(config="D:\\data_dev\\pdal-parallelizer\\config.json",
+                      input_type="dir",
+                      timeout=500)
