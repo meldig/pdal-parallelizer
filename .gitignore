@@ -1,7 +1,7 @@
-src/pdal_parallelizer/config_dev.json
-src/pdal_parallelizer/config.json
-src/pdal_parallelizer/pipeline.json
-src/pdal_parallelizer/temp
+pdal_parallelizer/config_dev.json
+pdal_parallelizer/config.json
+pdal_parallelizer/pipeline.json
+pdal_parallelizer/temp
 build
 dask-worker-space
 dist
