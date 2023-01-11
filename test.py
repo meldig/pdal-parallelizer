@@ -1,6 +1,6 @@
 import unittest
-from pdal_parallelizer import cloud, do, file_manager, bounds
-from pdal_parallelizer import tile
+from src.pdal_parallelizer import tile, do, file_manager, bounds
+from src.pdal_parallelizer import cloud
 import pdal
 import json
 import os

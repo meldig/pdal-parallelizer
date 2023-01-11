@@ -5,7 +5,7 @@ Contains the process-pipelines function you call in command line
 """
 import sys
 import click
-from pdal_parallelizer.__main__ import process_pipelines as process
+from src.pdal_parallelizer.__main__ import process_pipelines as process
 
 
 @click.group()
