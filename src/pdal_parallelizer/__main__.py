@@ -4,8 +4,8 @@ from dask import config as cfg
 from dask.distributed import LocalCluster, Client, progress
 from distributed.diagnostics import MemorySampler
 from os import listdir
-from . import do
-from . import file_manager
+from src.pdal_parallelizer import do
+from src.pdal_parallelizer import file_manager
 from matplotlib import pyplot as plt
 import gc
 
