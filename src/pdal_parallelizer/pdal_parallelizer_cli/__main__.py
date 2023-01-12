@@ -5,11 +5,11 @@ Contains the process-pipelines function you call in command line
 """
 import sys
 import click
-from pdal_parallelizer.__main__ import process_pipelines as process
+from pdal_parallelizer import process_pipelines as process
 
 
 @click.group()
-@click.version_option('1.10.19')
+@click.version_option('2.0.1')
 def main():
     """A simple parallelization tool for 3d point clouds treatment"""
     pass
@@ -49,7 +49,8 @@ def process_pipelines(**kwargs):
         tile_size=tile_size,
         buffer=buffer,
         remove_buffer=remove_buffer,
-        bounding_box=bounding_box
+        bounding_box=bounding_box,
+        process=True
     )
 
 

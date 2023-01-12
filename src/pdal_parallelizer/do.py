@@ -8,6 +8,7 @@ import dask
 from dask.distributed import Lock
 from . import tile
 from . import cloud
+from . import bounds
 import pickle
 import os
 
@@ -70,8 +71,9 @@ def process_pipelines(output_dir, json_pipeline, iterator, temp_dir=None, dry_ru
 
 def splitCloud(filepath, output_dir, json_pipeline, tile_bounds, nTiles=None, buffer=None, remove_buffer=False, bounding_box=None):
     """Split the cloud in many tiles"""
+    bds = bounds.Bounds(bounding_box[0], bounding_box[1], bounding_box[2], bounding_box[3]) if bounding_box else None
     # Create a cloud object
-    c = cloud.Cloud(filepath, bounds=bounding_box)
+    c = cloud.Cloud(filepath, bounds=bds)
     # Create a tile the size of the cloud
     t = tile.Tile(filepath=c.filepath, output_dir=output_dir, json_pipeline=json_pipeline, bounds=c.bounds, buffer=buffer, remove_buffer=remove_buffer, cloud_object=c)
     # Split the tile in small parts of given sizes
