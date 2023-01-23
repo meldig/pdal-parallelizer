@@ -13,8 +13,8 @@ import sys
 import pdal
 import json
 import os
-from . import cloud
-from . import bounds
+import cloud
+import bounds
 
 
 class Tile:

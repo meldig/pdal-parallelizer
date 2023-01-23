@@ -1,13 +1,17 @@
 import json
+import os.path
 import click
+import pdal
 from dask import config as cfg
 from dask.distributed import LocalCluster, Client, progress
 from distributed.diagnostics import MemorySampler
 from os import listdir
-from . import do
-from . import file_manager
+import do
+import file_manager
+import cloud
 from matplotlib import pyplot as plt
 import gc
+import ntpath
 
 
 def config_dask(n_workers, threads_per_worker, timeout):
@@ -38,6 +42,26 @@ def process_pipelines(
         bounding_box=None,
         process=False
 ):
+
+    # Assertions
+    assert type(config) is str
+    assert input_type == "single" or input_type == "dir"
+    if timeout:
+        assert type(timeout) is int
+    assert type(n_workers) is int
+    assert type(threads_per_worker) is int
+    if dry_run:
+        assert type(dry_run) is int
+    assert type(diagnostic) is bool
+    assert type(tile_size) is tuple
+    if buffer:
+        assert type(buffer) is int
+    if remove_buffer:
+        assert type(remove_buffer) is bool
+    if bounding_box:
+        assert type(bounding_box) is tuple
+        assert len(bounding_box) == 4
+
     with open(config, 'r') as c:
         config_file = json.load(c)
         input = config_file.get('input')
@@ -45,24 +69,11 @@ def process_pipelines(
         temp = config_file.get('temp')
         pipeline = config_file.get('pipeline')
 
-        # Assertions
-        assert type(config) is str
-        assert input_type == "single" or input_type == "dir"
-        if timeout:
-            assert type(timeout) is int
-        assert type(n_workers) is int
-        assert type(threads_per_worker) is int
-        if dry_run:
-            assert type(dry_run) is int
-        assert type(diagnostic) is bool
-        assert type(tile_size) is tuple
-        if buffer:
-            assert type(buffer) is int
-        if remove_buffer:
-            assert type(remove_buffer) is bool
-        if bounding_box:
-            assert type(bounding_box) is tuple
-            assert len(bounding_box) == 4
+    if not os.path.exists(temp):
+        os.mkdir(temp)
+
+    if not os.path.exists(output):
+        os.mkdir(output)
 
     # If there is some temp file in the temp directory, these are processed
     if len(listdir(temp)) != 0:
@@ -128,3 +139,18 @@ def process_pipelines(
     client.run(gc.collect)
 
     file_manager.getEmptyWeight(output_directory=output)
+
+    if input_type == 'single':
+        input_filename = ntpath.basename(input)
+        merge_ppln = pdal.Pipeline(cloud.merge(output, input_filename))
+        merge_ppln.execute()
+
+
+if __name__ == "__main__":
+    process_pipelines(
+        config="D:/data_dev/pdal-parallelizer/config.json",
+        input_type="single",
+        tile_size=(50, 50),
+        timeout=500,
+        n_workers=5
+    )
