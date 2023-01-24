@@ -9,6 +9,7 @@ A Cloud is composed of :
 import subprocess
 import json
 from .bounds import Bounds
+from os import listdir
 
 
 def crop(bounds):
@@ -16,6 +17,19 @@ def crop(bounds):
     parsed = json.loads(crop)
     parsed['bounds'] = str(bounds)
     return parsed
+
+
+def merge(output_dir, filename):
+    outputs = ""
+    for f in listdir(output_dir):
+        if f.split('.').count('png') <= 0:
+            outputs += '"' + output_dir + '/' + f + '",'
+
+    if outputs != "":
+        extension = listdir(output_dir)[0].split('.')[1]
+
+        merge = '[' + outputs + '{"type": "writers.' + extension + '", "filename":"' + output_dir + '/' + filename + '","extra_dims": "all"}]'
+        return merge
 
 
 def addClassFlags():

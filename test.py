@@ -175,6 +175,10 @@ class TestTile(unittest.TestCase):
         result = self.t.split(0.30, 0.30)
         self.assertEqual(len(list(result)), 12)
 
+    def test_split_2(self):
+        result = self.t.split(100, 100)
+        self.assertEqual(len(list(result)), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

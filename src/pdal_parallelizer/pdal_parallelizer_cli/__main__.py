@@ -9,7 +9,7 @@ from pdal_parallelizer import process_pipelines as process
 
 
 @click.group()
-@click.version_option('2.0.1')
+@click.version_option('2.0.2')
 def main():
     """A simple parallelization tool for 3d point clouds treatment"""
     pass
@@ -26,6 +26,7 @@ def main():
 @click.option('-b', '--buffer', required=False, type=int)
 @click.option('-rb', '--remove_buffer', is_flag=True, required=False)
 @click.option('-bb', '--bounding_box', required=False, nargs=4, type=float)
+@click.option('-mt', '--merge_tiles', required=False, is_flag=True)
 def process_pipelines(**kwargs):
     # Get all the options
     config = kwargs.get('config')
@@ -38,6 +39,7 @@ def process_pipelines(**kwargs):
     buffer = kwargs.get('buffer')
     remove_buffer = kwargs.get('remove_buffer')
     bounding_box = kwargs.get('bounding_box')
+    merge_tiles = kwargs.get('merge_tiles')
 
     process(
         config=config,
@@ -50,6 +52,7 @@ def process_pipelines(**kwargs):
         buffer=buffer,
         remove_buffer=remove_buffer,
         bounding_box=bounding_box,
+        merge_tiles=merge_tiles,
         process=True
     )
 

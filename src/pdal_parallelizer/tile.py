@@ -97,9 +97,9 @@ class Tile:
     def split(self, distTileX, distTileY, nTiles=None):
         """Split the tile in small parts of given sizes"""
         current_minx = self.bounds.minx
-        current_maxx = current_minx + distTileX
+        current_maxx = current_minx + distTileX if current_minx + distTileX <= self.bounds.maxx else self.bounds.maxx
         current_miny = self.bounds.miny
-        current_maxy = current_miny + distTileY
+        current_maxy = current_miny + distTileY if current_miny + distTileY <= self.bounds.maxy else self.bounds.maxy
         # If it's a dry run, 'cpt' will count the number of tiles created
         cpt = 0
 

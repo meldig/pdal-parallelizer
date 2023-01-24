@@ -57,10 +57,14 @@ def getEmptyWeight(output_directory):
     # Convert it in ko
     weights_ko = [round(b / 1024, 2) for b in weights_bytes]
     # Calculate the deciles
-    deciles = [round(q, 2) for q in statistics.quantiles(weights_ko, n=10)]
-    # And retrieve files whose weight is in the first decile
-    weight_files = [join(output_directory, f) for f in listdir(output_directory) if round(os.path.getsize(join(output_directory, f)) / 1024, 2) <= deciles[0]]
-    removeEmptyFiles(weight_files)
+    if len(weights_ko) >= 2:
+        deciles = [round(q, 2) for q in statistics.quantiles(weights_ko, n=10)]
+        # And retrieve files whose weight is in the first decile
+        weight_files = [join(output_directory, f) for f in listdir(output_directory) if round(os.path.getsize(join(output_directory, f)) / 1024, 2) <= deciles[0]]
+        removeEmptyFiles(weight_files)
+    else:
+        pass
+        #removeEmptyFiles([join(output_directory, f) for f in listdir(output_directory)])
 
 
 def removeEmptyFiles(files):
