@@ -26,7 +26,7 @@ def main():
 @click.option('-b', '--buffer', required=False, type=int)
 @click.option('-rb', '--remove_buffer', is_flag=True, required=False)
 @click.option('-bb', '--bounding_box', required=False, nargs=4, type=float)
-@click.option('-mt', '--merge_tiles', required=False, type=bool)
+@click.option('-mt', '--merge_tiles', required=False, is_flag=True)
 def process_pipelines(**kwargs):
     # Get all the options
     config = kwargs.get('config')

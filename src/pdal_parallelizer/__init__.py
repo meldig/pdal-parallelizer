@@ -13,17 +13,16 @@ from . import cloud
 from matplotlib import pyplot as plt
 import sys
 import ntpath
-from colorama import Fore, Style
 
 
 def query_yes_no(question, default='no'):
     valid = {'yes': True, 'y': True, 'ye': True, 'no': False, 'n': False}
     if default is None:
-        prompt = f' [y/n] {Style.RESET_ALL}'
+        prompt = ' [y/n] '
     elif default == 'yes':
-        prompt = f' [Y/n] {Style.RESET_ALL}'
+        prompt = ' [Y/n] '
     elif default == 'no':
-        prompt = f' [y/N] {Style.RESET_ALL}'
+        prompt = ' [y/N] '
     else:
         raise ValueError(f'Invalid default answer: {default}')
 
@@ -64,7 +63,7 @@ def process_pipelines(
         buffer=None,
         remove_buffer=None,
         bounding_box=None,
-        merge_tiles=False,
+        merge_tiles=None,
         process=False
 ):
     # Assertions
@@ -88,15 +87,15 @@ def process_pipelines(
 
     if n_workers >= os.cpu_count():
         answer = query_yes_no(
-            f'\n{Fore.RED}WARNING - You choose to launch {n_workers} workers but your machine has only {os.cpu_count()}'
-            f'CPUs, please reduce the number of workers.\nDo you want to continue ?'
+            f'\nWARNING - You choose to launch {n_workers} workers but your machine has only {os.cpu_count()}'
+            f' CPUs, please reduce the number of workers.\nDo you want to continue ?'
         )
         if not answer:
             return
 
     if tile_size == (256, 256):
         answer = query_yes_no(
-            f'{Fore.RED}WARNING - You are using the default value of the tile_size option (256 by 256 meters). Please '
+            f'WARNING - You are using the default value of the tile_size option (256 by 256 meters). Please '
             f'check if your points cloud\'s dimensions are greater than this value.\nDo you want to continue ? '
         )
         if not answer:
