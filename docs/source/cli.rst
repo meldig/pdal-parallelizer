@@ -52,17 +52,21 @@ Get a graph of the memory usage during the execution
 
     -ts, --tile_size
 
-Size of the tiles (If a tile does not contain any points, it will be not processed) [default=(256,256)] (single file only)
+Size of the tiles [default=(256,256)]
 
     -b, --buffer
 
-Size of the buffer that will be applied to the tiles (in all 4 directions) (single file only)
+Size of the buffer that will be applied to the tiles (in all 4 directions)
 
 
     -rb, --remove_buffer
 
-This flag indicate you want to remove the buffer when your tiles are written. If you choose not to delete the buffer, it will be assigned the withheld flag. (single file only)
+This flag indicate you want to remove the buffer when your tiles are written. If you choose not to delete the buffer, it will be assigned the withheld flag.
 
     -bb, --bounding_box
 
-Coordinates of the bounding box you want to process (minx miny maxx maxy) (single file only)
+Coordinates of the bounding box you want to process (minx miny maxx maxy)
+
+    -mt, --merge_tiles
+
+This flag indicate you want to merge all the tiles at the end of a single cloud treatment
