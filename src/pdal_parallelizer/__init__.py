@@ -2,14 +2,15 @@ import json
 import os
 import os.path
 import click
+import dask
 import pdal
 from dask import config as cfg
 from dask.distributed import LocalCluster, Client, progress
 from distributed.diagnostics import MemorySampler
 from os import listdir
-from . import do
-from . import file_manager
-from . import cloud
+import do
+import file_manager
+import cloud
 from matplotlib import pyplot as plt
 import sys
 import ntpath
@@ -93,7 +94,7 @@ def process_pipelines(
         if not answer:
             return
 
-    if tile_size == (256, 256):
+    if tile_size == (256, 256) and input_type == 'single':
         answer = query_yes_no(
             f'WARNING - You are using the default value of the tile_size option (256 by 256 meters). Please '
             f'check if your points cloud\'s dimensions are greater than this value.\nDo you want to continue ? '
@@ -162,19 +163,12 @@ def process_pipelines(
     if diagnostic:
         ms = MemorySampler()
         with ms.sample(label='execution', client=client):
-            delayed = client.persist(delayed)
+            delayed = client.compute(delayed)
             progress(delayed) if process else None
-            futures = client.compute(delayed)
-            client.gather(futures)
         ms.plot()
     else:
-        delayed = client.persist(delayed)
+        delayed = client.compute(delayed)
         progress(delayed) if process else None
-        futures = client.compute(delayed)
-        client.gather(futures)
-
-    del delayed
-    del futures
 
     file_manager.getEmptyWeight(output_directory=output)
 
@@ -192,6 +186,8 @@ if __name__ == "__main__":
     process_pipelines(
         config="D:/data_dev/pdal-parallelizer/config.json",
         input_type="single",
+        tile_size=(50, 50),
         timeout=500,
-        n_workers=3
+        n_workers=6,
+        process=True
     )

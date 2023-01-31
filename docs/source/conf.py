@@ -7,7 +7,7 @@ copyright = '2022, Métropole Européenne de Lille'
 author = 'Clément Alba'
 
 release = '2.0'
-version = '2.0.1'
+version = '2.0.2'
 
 # -- General configuration
 
