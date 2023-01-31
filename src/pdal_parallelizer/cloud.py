@@ -37,10 +37,21 @@ def addClassFlags():
     return json.loads(ferry)
 
 
+def compute_quickinfo(filepath):
+    """Returns some information about the cloud."""
+    # Get the cloud information
+    pdal_info = subprocess.run(['pdal', 'info', filepath, '--summary'],
+                               stderr=subprocess.PIPE,
+                               stdout=subprocess.PIPE)
+    info = json.loads(pdal_info.stdout.decode())
+
+    return info
+
+
 class Cloud:
     def __init__(self, filepath, bounds=None):
         self.filepath = filepath
-        self.info = self.compute_quickinfo()
+        self.info = compute_quickinfo(self.filepath)
         self.classFlags = self.hasClassFlags()
 
         # Get the cloud information to set its bounds
@@ -65,19 +76,9 @@ class Cloud:
     def getCount(self):
         return self.info['summary']['num_points']
 
-    def compute_quickinfo(self):
-        """Returns some information about the cloud."""
-        # Get the cloud information
-        pdal_info = subprocess.run(['pdal', 'info', self.filepath, '--summary'],
-                                   stderr=subprocess.PIPE,
-                                   stdout=subprocess.PIPE)
-        info = json.loads(pdal_info.stdout.decode())
-
-        return info
-
     def hasClassFlags(self):
         """Check if the cloud has the ClassFlags dimension"""
-        info = self.compute_quickinfo()
+        info = compute_quickinfo(self.filepath)
         dimensions = info['summary']['dimensions']
         return 'ClassFlags' in dimensions
 

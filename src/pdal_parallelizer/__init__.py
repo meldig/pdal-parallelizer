@@ -14,6 +14,7 @@ from matplotlib import pyplot as plt
 import sys
 import ntpath
 from os.path import join
+from math import ceil
 
 
 def query_yes_no(question, default='no'):
@@ -87,6 +88,13 @@ def process_pipelines(
         assert type(bounding_box) is tuple
         assert len(bounding_box) == 4
 
+    with open(config, 'r') as c:
+        config_file = json.load(c)
+        input_dir = config_file.get('input')
+        output = config_file.get('output')
+        temp = config_file.get('temp')
+        pipeline = config_file.get('pipeline')
+
     if n_workers >= os.cpu_count():
         answer = query_yes_no(
             f'\nWARNING - You choose to launch {n_workers} workers but your machine has only {os.cpu_count()}'
@@ -95,20 +103,33 @@ def process_pipelines(
         if not answer:
             return
 
-    if tile_size == (256, 256) and input_type == 'single':
-        answer = query_yes_no(
-            f'WARNING - You are using the default value of the tile_size option (256 by 256 meters). Please '
-            f'check if your points cloud\'s dimensions are greater than this value.\nDo you want to continue ? '
-        )
-        if not answer:
-            return
+    if input_type == 'single':
+        if tile_size == (256, 256):
+            answer = query_yes_no(
+                f'WARNING - You are using the default value of the tile_size option (256 by 256 meters). Please '
+                f'check if your points cloud\'s dimensions are greater than this value.\nDo you want to continue ? '
+            )
+            if not answer:
+                return
 
-    with open(config, 'r') as c:
-        config_file = json.load(c)
-        input_dir = config_file.get('input')
-        output = config_file.get('output')
-        temp = config_file.get('temp')
-        pipeline = config_file.get('pipeline')
+        infos = cloud.compute_quickinfo(input_dir)
+        bounds = infos['summary']['bounds']
+        distX, distY = (
+            int(bounds['maxx'] - bounds['minx']),
+            int(bounds['maxy'] - bounds['miny'])
+        )
+
+        nTilesX = ceil(distX/tile_size[0])
+        nTilesY = ceil(distY/tile_size[0])
+
+        if nTilesX * nTilesY > n_workers:
+            answer = query_yes_no(
+                f'WARNING - With this size of tiles and this number of workers, each worker will have more than one task'
+                f' and it can blow up the distributed memory. Please increase your tiles size or your number of worker.'
+                f' \nDo you want to continue ? '
+            )
+            if not answer:
+                return
 
     if not os.path.exists(temp):
         os.mkdir(temp)
@@ -192,7 +213,7 @@ if __name__ == "__main__":
     process_pipelines(
         config="D:/data_dev/pdal-parallelizer/config.json",
         input_type="single",
-        tile_size=(50, 50),
+        tile_size=(35, 35),
         timeout=500,
         n_workers=6,
         process=True,
