@@ -27,6 +27,7 @@ def main():
 @click.option('-rb', '--remove_buffer', is_flag=True, required=False)
 @click.option('-bb', '--bounding_box', required=False, nargs=4, type=float)
 @click.option('-mt', '--merge_tiles', required=False, is_flag=True)
+@click.option('-rt', '--remove_tiles', required=False, is_flag=True)
 def process_pipelines(**kwargs):
     # Get all the options
     config = kwargs.get('config')
@@ -40,6 +41,7 @@ def process_pipelines(**kwargs):
     remove_buffer = kwargs.get('remove_buffer')
     bounding_box = kwargs.get('bounding_box')
     merge_tiles = kwargs.get('merge_tiles')
+    remove_tiles = kwargs.get('remove_tiles')
 
     process(
         config=config,
@@ -53,6 +55,7 @@ def process_pipelines(**kwargs):
         remove_buffer=remove_buffer,
         bounding_box=bounding_box,
         merge_tiles=merge_tiles,
+        remove_tiles=remove_tiles,
         process=True
     )
 

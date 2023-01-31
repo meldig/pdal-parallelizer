@@ -2,7 +2,6 @@ import json
 import os
 import os.path
 import click
-import dask
 import pdal
 from dask import config as cfg
 from dask.distributed import LocalCluster, Client, progress
@@ -14,6 +13,7 @@ import cloud
 from matplotlib import pyplot as plt
 import sys
 import ntpath
+from os.path import join
 
 
 def query_yes_no(question, default='no'):
@@ -64,7 +64,8 @@ def process_pipelines(
         buffer=None,
         remove_buffer=None,
         bounding_box=None,
-        merge_tiles=None,
+        merge_tiles=False,
+        remove_tiles=False,
         process=False
 ):
     # Assertions
@@ -179,6 +180,11 @@ def process_pipelines(
             merge_ppln = pdal.Pipeline(cloud.merge(output, input_filename))
             merge_ppln.execute()
 
+        if remove_tiles:
+            for f in os.listdir(output):
+                if f != input_filename:
+                    os.remove(join(output, f))
+
     plt.savefig(output + '/memory-usage.png') if diagnostic else None
 
 
@@ -189,5 +195,7 @@ if __name__ == "__main__":
         tile_size=(50, 50),
         timeout=500,
         n_workers=6,
-        process=True
+        process=True,
+        merge_tiles=True,
+        remove_tiles=True
     )
