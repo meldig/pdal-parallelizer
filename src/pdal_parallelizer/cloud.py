@@ -21,14 +21,21 @@ def crop(bounds):
 
 def merge(output_dir, filename):
     outputs = ""
+    compression = 'none'
     for f in listdir(output_dir):
         if f.split('.').count('png') <= 0:
             outputs += '"' + output_dir + '/' + f + '",'
 
     if outputs != "":
         extension = listdir(output_dir)[0].split('.')[1]
+        if extension == 'laz':
+            writers_extension = 'las'
+            compression = 'laszip'
+        else:
+            writers_extension = extension
 
-        merge = '[' + outputs + '{"type": "writers.' + extension + '", "filename":"' + output_dir + '/' + filename + '","extra_dims": "all"}]'
+        merge = '[' + outputs + '{"type": "writers.' + writers_extension + '", "filename":"' + output_dir + '/' + \
+                filename + '.' + extension + '","extra_dims": "all", "compression": "' + compression + '"}]'
         return merge
 
 

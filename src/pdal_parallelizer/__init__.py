@@ -66,8 +66,7 @@ def process_pipelines(
         remove_buffer=None,
         bounding_box=None,
         merge_tiles=False,
-        remove_tiles=False,
-        process=False
+        remove_tiles=False
 ):
     # Assertions
     assert type(config) is str
@@ -79,7 +78,7 @@ def process_pipelines(
     if dry_run:
         assert type(dry_run) is int
     assert type(diagnostic) is bool
-    assert type(tile_size) is tuple
+    assert type(tile_size) is tuple and len(tile_size) == 2
     if buffer:
         assert type(buffer) is int
     if remove_buffer:
@@ -87,6 +86,8 @@ def process_pipelines(
     if bounding_box:
         assert type(bounding_box) is tuple
         assert len(bounding_box) == 4
+    assert type(merge_tiles) is bool
+    assert type(remove_tiles) is bool
 
     with open(config, 'r') as c:
         config_file = json.load(c)
@@ -186,24 +187,24 @@ def process_pipelines(
         ms = MemorySampler()
         with ms.sample(label='execution', client=client):
             delayed = client.compute(delayed)
-            progress(delayed) if process else None
+            progress(delayed)
         ms.plot()
     else:
         delayed = client.compute(delayed)
-        progress(delayed) if process else None
+        progress(delayed)
 
     file_manager.getEmptyWeight(output_directory=output)
 
     if merge_tiles and len(listdir(output)) > 1:
-        input_filename = ntpath.basename(input_dir)
+        input_filename = ntpath.basename(input_dir).split('.')[0]
         merge = cloud.merge(output, input_filename)
         if merge is not None:
-            merge_ppln = pdal.Pipeline(cloud.merge(output, input_filename))
+            merge_ppln = pdal.Pipeline(merge)
             merge_ppln.execute()
 
         if remove_tiles:
             for f in os.listdir(output):
-                if f != input_filename:
+                if f.split('.')[0] != input_filename:
                     os.remove(join(output, f))
 
     plt.savefig(output + '/memory-usage.png') if diagnostic else None
@@ -213,10 +214,9 @@ if __name__ == "__main__":
     process_pipelines(
         config="D:/data_dev/pdal-parallelizer/config.json",
         input_type="single",
-        tile_size=(35, 35),
+        tile_size=(50, 50),
         timeout=500,
         n_workers=6,
-        process=True,
         merge_tiles=True,
         remove_tiles=True
     )

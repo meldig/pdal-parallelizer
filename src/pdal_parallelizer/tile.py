@@ -55,8 +55,12 @@ class Tile:
             # Get the reader and the writer
             reader = list(filter(lambda x: x['type'].startswith('readers'), p))
             writer = list(filter(lambda x: x['type'].startswith('writers'), p))
-            # Get the extension for the output
-            extension = '.' + writer[0]['type'].split('.')[1] + '.las' if writer[0]['type'].split('.')[1] == 'copc' else '.' + writer[0]['type'].split('.')[1]
+            try:
+                compression = writer[0]['compression']
+                extension = '.laz' if compression == 'laszip' or compression == 'lazperf' else '.las'
+            except KeyError:
+                # Get the extension for the output
+                extension = '.' + writer[0]['type'].split('.')[1] + '.las' if writer[0]['type'].split('.')[1] == 'copc' else '.' + writer[0]['type'].split('.')[1]
 
             # If there is a buffer
             if self.buffer:
