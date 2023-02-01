@@ -125,8 +125,8 @@ def process_pipelines(
         if nTilesX * nTilesY > n_workers:
             answer = query_yes_no(
                 f'WARNING - With this size of tiles and this number of workers, each worker will have more than one task'
-                f' and it can blow up the distributed memory. Please increase your tiles size or your number of worker.'
-                f' \nDo you want to continue ? '
+                f' and it can blow up the distributed memory. Please choose a larger size for your tiles or increase '
+                f'your number of workers.\nDo you want to continue ?'
             )
             if not answer:
                 return
