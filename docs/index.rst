@@ -6,8 +6,8 @@ Some processing on point clouds can be very time consuming, this problem can be 
 .. toctree::
     :maxdepth: 2
 
-    intro
-    installation
-    usage
-    api
-    cli
+    source/intro
+    source/installation
+    source/usage
+    source/api
+    source/cli
