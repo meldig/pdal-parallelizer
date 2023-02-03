@@ -55,8 +55,7 @@ def process_pipelines(**kwargs):
         remove_buffer=remove_buffer,
         bounding_box=bounding_box,
         merge_tiles=merge_tiles,
-        remove_tiles=remove_tiles,
-        process=True
+        remove_tiles=remove_tiles
     )
 
 

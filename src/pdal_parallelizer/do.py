@@ -6,9 +6,9 @@ Responsible for all the executions, serializations or creations of object we nee
 
 import dask
 from dask.distributed import Lock
-import tile
-import cloud
-import bounds
+from . import tile
+from . import cloud
+from . import bounds
 import pickle
 import os
 

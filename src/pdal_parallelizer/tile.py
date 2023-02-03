@@ -13,8 +13,8 @@ import sys
 import pdal
 import json
 import os
-import cloud
-import bounds
+from . import cloud
+from . import bounds
 
 
 def load_pipeline(pipeline):

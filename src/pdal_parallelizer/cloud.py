@@ -8,7 +8,7 @@ A Cloud is composed of :
 
 import subprocess
 import json
-from bounds import Bounds
+from .bounds import Bounds
 from os import listdir
 
 
@@ -31,7 +31,7 @@ def merge(output_dir, filename, writers):
             outputs += '"' + output_dir + '/' + f + '",'
 
     if outputs != "":
-        extension = writers[0]['type'].split('.')[1]
+        extension = listdir(output_dir)[0].split('.')[1]
         if extension == 'laz':
             writers_extension = 'las'
             compression = 'laszip'
