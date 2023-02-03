@@ -213,14 +213,3 @@ def process_pipelines(
                     os.remove(join(output, f))
 
     plt.savefig(output + '/memory-usage.png') if diagnostic else None
-
-
-if __name__ == "__main__":
-    process_pipelines(
-        config="D:/data_dev/pdal-parallelizer/config.json",
-        input_type="single",
-        tile_size=(50, 50),
-        timeout=500,
-        n_workers=6,
-        merge_tiles=True
-    )
