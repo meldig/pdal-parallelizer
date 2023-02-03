@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import os.path
 import click
@@ -10,9 +11,12 @@ from os import listdir
 from . import do
 from . import file_manager
 from . import cloud
+from . import tile
 from matplotlib import pyplot as plt
 import sys
 import ntpath
+from os.path import join
+from math import ceil
 
 
 def query_yes_no(question, default='no'):
@@ -46,7 +50,7 @@ def config_dask(n_workers, threads_per_worker, timeout):
     cfg.set({'interface': 'lo'})
     cfg.set({'distributed.scheduler.worker-ttl': None})
     cfg.set({'distributed.comm.timeouts.connect': timeout})
-    cluster = LocalCluster(n_workers=n_workers, threads_per_worker=threads_per_worker)
+    cluster = LocalCluster(n_workers=n_workers, threads_per_worker=threads_per_worker, silence_logs=logging.ERROR)
     client = Client(cluster)
     return client
 
@@ -63,8 +67,8 @@ def process_pipelines(
         buffer=None,
         remove_buffer=None,
         bounding_box=None,
-        merge_tiles=None,
-        process=False
+        merge_tiles=False,
+        remove_tiles=False
 ):
     # Assertions
     assert type(config) is str
@@ -76,7 +80,7 @@ def process_pipelines(
     if dry_run:
         assert type(dry_run) is int
     assert type(diagnostic) is bool
-    assert type(tile_size) is tuple
+    assert type(tile_size) is tuple and len(tile_size) == 2
     if buffer:
         assert type(buffer) is int
     if remove_buffer:
@@ -84,6 +88,15 @@ def process_pipelines(
     if bounding_box:
         assert type(bounding_box) is tuple
         assert len(bounding_box) == 4
+    assert type(merge_tiles) is bool
+    assert type(remove_tiles) is bool
+
+    with open(config, 'r') as c:
+        config_file = json.load(c)
+        input_dir = config_file.get('input')
+        output = config_file.get('output')
+        temp = config_file.get('temp')
+        pipeline = config_file.get('pipeline')
 
     if n_workers >= os.cpu_count():
         answer = query_yes_no(
@@ -93,20 +106,33 @@ def process_pipelines(
         if not answer:
             return
 
-    if tile_size == (256, 256):
-        answer = query_yes_no(
-            f'WARNING - You are using the default value of the tile_size option (256 by 256 meters). Please '
-            f'check if your points cloud\'s dimensions are greater than this value.\nDo you want to continue ? '
-        )
-        if not answer:
-            return
+    if input_type == 'single':
+        if tile_size == (256, 256):
+            answer = query_yes_no(
+                f'WARNING - You are using the default value of the tile_size option (256 by 256 meters). Please '
+                f'check if your points cloud\'s dimensions are greater than this value.\nDo you want to continue ? '
+            )
+            if not answer:
+                return
 
-    with open(config, 'r') as c:
-        config_file = json.load(c)
-        input_dir = config_file.get('input')
-        output = config_file.get('output')
-        temp = config_file.get('temp')
-        pipeline = config_file.get('pipeline')
+        infos = cloud.compute_quickinfo(input_dir)
+        bounds = infos['summary']['bounds']
+        distX, distY = (
+            int(bounds['maxx'] - bounds['minx']),
+            int(bounds['maxy'] - bounds['miny'])
+        )
+
+        nTilesX = ceil(distX / tile_size[0])
+        nTilesY = ceil(distY / tile_size[0])
+
+        if nTilesX * nTilesY > n_workers:
+            answer = query_yes_no(
+                f'WARNING - With this size of tiles and this number of workers, each worker will have more than one task'
+                f' and it can blow up the distributed memory. Please choose a larger size for your tiles or increase '
+                f'your number of workers.\nDo you want to continue ?'
+            )
+            if not answer:
+                return
 
     if not os.path.exists(temp):
         os.mkdir(temp)
@@ -162,36 +188,28 @@ def process_pipelines(
     if diagnostic:
         ms = MemorySampler()
         with ms.sample(label='execution', client=client):
-            delayed = client.persist(delayed)
-            progress(delayed) if process else None
-            futures = client.compute(delayed)
-            client.gather(futures)
+            delayed = client.compute(delayed)
+            progress(delayed)
         ms.plot()
     else:
-        delayed = client.persist(delayed)
-        progress(delayed) if process else None
-        futures = client.compute(delayed)
-        client.gather(futures)
+        delayed = client.compute(delayed)
+        progress(delayed)
 
     del delayed
-    del futures
 
     file_manager.getEmptyWeight(output_directory=output)
 
     if merge_tiles and len(listdir(output)) > 1:
-        input_filename = ntpath.basename(input_dir)
-        merge = cloud.merge(output, input_filename)
+        input_filename = ntpath.basename(input_dir).split('.')[0]
+        writers = tile.get_writers(tile.load_pipeline(pipeline))
+        merge = cloud.merge(output, input_filename, writers)
         if merge is not None:
-            merge_ppln = pdal.Pipeline(cloud.merge(output, input_filename))
+            merge_ppln = pdal.Pipeline(merge)
             merge_ppln.execute()
 
+        if remove_tiles:
+            for f in os.listdir(output):
+                if f.split('.')[0] != input_filename:
+                    os.remove(join(output, f))
+
     plt.savefig(output + '/memory-usage.png') if diagnostic else None
-
-
-if __name__ == "__main__":
-    process_pipelines(
-        config="D:/data_dev/pdal-parallelizer/config.json",
-        input_type="single",
-        timeout=500,
-        n_workers=3
-    )

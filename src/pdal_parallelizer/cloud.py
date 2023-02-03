@@ -19,16 +19,35 @@ def crop(bounds):
     return parsed
 
 
-def merge(output_dir, filename):
+def merge(output_dir, filename, writers):
     outputs = ""
+    # Default values according to the pdal writers.las documentation
+    compression = 'none'
+    minor_version = 2
+    dataformat_id = 3
+
     for f in listdir(output_dir):
         if f.split('.').count('png') <= 0:
             outputs += '"' + output_dir + '/' + f + '",'
 
     if outputs != "":
         extension = listdir(output_dir)[0].split('.')[1]
+        if extension == 'laz':
+            writers_extension = 'las'
+            compression = 'laszip'
+        else:
+            writers_extension = extension
 
-        merge = '[' + outputs + '{"type": "writers.' + extension + '", "filename":"' + output_dir + '/' + filename + '","extra_dims": "all"}]'
+        try:
+            minor_version = writers[0]['minor_version']
+            dataformat_id = writers[0]['dataformat_id']
+        except KeyError:
+            pass
+
+        merge = '[' + outputs + '{"type": "writers.' + writers_extension + '", "filename":"' + output_dir + '/' + \
+                filename + '.' + extension + '","extra_dims": "all", "compression": "' + compression + '", ' + \
+                '"minor_version": ' + str(minor_version) + ', "dataformat_id": ' + str(dataformat_id) + '}]'
+
         return merge
 
 
@@ -37,10 +56,21 @@ def addClassFlags():
     return json.loads(ferry)
 
 
+def compute_quickinfo(filepath):
+    """Returns some information about the cloud."""
+    # Get the cloud information
+    pdal_info = subprocess.run(['pdal', 'info', filepath, '--summary'],
+                               stderr=subprocess.PIPE,
+                               stdout=subprocess.PIPE)
+    info = json.loads(pdal_info.stdout.decode())
+
+    return info
+
+
 class Cloud:
     def __init__(self, filepath, bounds=None):
         self.filepath = filepath
-        self.info = self.compute_quickinfo()
+        self.info = compute_quickinfo(self.filepath)
         self.classFlags = self.hasClassFlags()
 
         # Get the cloud information to set its bounds
@@ -65,19 +95,9 @@ class Cloud:
     def getCount(self):
         return self.info['summary']['num_points']
 
-    def compute_quickinfo(self):
-        """Returns some information about the cloud."""
-        # Get the cloud information
-        pdal_info = subprocess.run(['pdal', 'info', self.filepath, '--summary'],
-                                   stderr=subprocess.PIPE,
-                                   stdout=subprocess.PIPE)
-        info = json.loads(pdal_info.stdout.decode())
-
-        return info
-
     def hasClassFlags(self):
         """Check if the cloud has the ClassFlags dimension"""
-        info = self.compute_quickinfo()
+        info = compute_quickinfo(self.filepath)
         dimensions = info['summary']['dimensions']
         return 'ClassFlags' in dimensions
 
