@@ -10,7 +10,7 @@ This file look like this :
     {
         "input": "The folder that contains your input files (or a file path)",
         "output": "The folder that will receive your output files",
-        "temp": "The folder that will contains your serialized pipelines"
+        "temp": "The folder that will contains your serialized pipelines",
         "pipeline": "Your pipeline path"
     }
 

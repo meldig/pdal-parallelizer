@@ -36,7 +36,7 @@ Process points clouds.
 
 - tile_size (*tuple*, *optional*) - Size of the tiles. (default=(256,256))
 - buffer (*int*, *optional*) - Size of the buffer that will be applied to the tiles. (in all 4 directions)
-- remove_buffer (*bool*, *optional*) - If True, it indicate you want to remove the buffer when your tiles are written. If you choose not to delete the buffer, it will be assigned the withheld flag.
+- remove_buffer (*bool*, *optional*) - If True, it indicate you want to remove the buffer when your tiles are written. If you choose not to delete the buffer, it will be assigned the withheld flag. (default=False)
 - bounding_box (*tuple*, *optional*) - Coordinates of the bounding box you want to process. (minx, miny, maxx, maxy)
-- merge_tiles (*bool*, *optional*) - This flag indicate you want to merge all the tiles at the end of a single cloud treatment.
-- process (*bool*, *optional*) - If True, you will see a progress bar while the clouds are processed. (default=False)
+- merge_tiles (*bool*, *optional*) - Indicate you want to merge all the tiles at the end of a single cloud treatment. (default=False)
+- remove_tiles (*bool*, *optional*) - If you choose to merge the tiles, set remove_tiles to True to remove the merged tiles. (default=False)
