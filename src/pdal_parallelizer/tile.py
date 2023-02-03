@@ -17,6 +17,20 @@ import cloud
 import bounds
 
 
+def load_pipeline(pipeline):
+    with open(pipeline, 'r') as ppln:
+        p = json.load(ppln)
+    return p
+
+
+def get_readers(pipeline):
+    return list(filter(lambda x: x['type'].startswith('readers'), pipeline))
+
+
+def get_writers(pipeline):
+    return list(filter(lambda x: x['type'].startswith('writers'), pipeline))
+
+
 class Tile:
     def __init__(self, filepath, output_dir, json_pipeline, name=None, bounds=None, buffer=None, remove_buffer=False, cloud_object=None):
         self.filepath = filepath
@@ -45,56 +59,54 @@ class Tile:
         """Assign a pipeline to the tile"""
         output_dir = self.output_dir
 
-        # Open the pipeline
-        with open(self.json_pipeline, 'r') as pipeline:
-            p = json.load(pipeline)
+        p = load_pipeline(self.json_pipeline)
 
-            # Create the name of the temp file associated to the pipeline
-            temp_name = 'temp__' + self.getName()
-            output_filename = f'{output_dir}/{self.getName()}'
-            # Get the reader and the writer
-            reader = list(filter(lambda x: x['type'].startswith('readers'), p))
-            writer = list(filter(lambda x: x['type'].startswith('writers'), p))
-            try:
-                compression = writer[0]['compression']
-                extension = '.laz' if compression == 'laszip' or compression == 'lazperf' else '.las'
-            except KeyError:
-                # Get the extension for the output
-                extension = '.' + writer[0]['type'].split('.')[1] + '.las' if writer[0]['type'].split('.')[1] == 'copc' else '.' + writer[0]['type'].split('.')[1]
+        # Create the name of the temp file associated to the pipeline
+        temp_name = 'temp__' + self.getName()
+        output_filename = f'{output_dir}/{self.getName()}'
+        # Get the reader and the writer
+        reader = get_readers(p)
+        writer = get_writers(p)
+        try:
+            compression = writer[0]['compression']
+            extension = '.laz' if compression == 'laszip' or compression == 'lazperf' else '.las'
+        except KeyError:
+            # Get the extension for the output
+            extension = '.' + writer[0]['type'].split('.')[1] + '.las' if writer[0]['type'].split('.')[1] == 'copc' else '.' + writer[0]['type'].split('.')[1]
 
-            # If there is a buffer
-            if self.buffer:
-                # If the writer is 'writers.copc' or 'writer.laz' or 'writers.copc'
-                if writer[0]['type'].split('.')[1] in ['las', 'laz', 'copc']:
-                    # Insert the filter to assign the wittheld flag to the buffer
-                    p.insert(1, self.assign)
-            if self.remove_buffer:
-                # Remove the buffer
-                p.insert(len(p) - 1, bounds.removeBuffer(self.bounds_without_buffer))
+        # If there is a buffer
+        if self.buffer:
+            # If the writer is 'writers.copc' or 'writer.laz' or 'writers.copc'
+            if writer[0]['type'].split('.')[1] in ['las', 'laz', 'copc']:
+                # Insert the filter to assign the wittheld flag to the buffer
+                p.insert(1, self.assign)
+        if self.remove_buffer:
+            # Remove the buffer
+            p.insert(len(p) - 1, bounds.removeBuffer(self.bounds_without_buffer))
 
-            if self.cloud:
-                # If there is the ferry filter attribute in the tile instance
-                if not self.cloud.classFlags:
-                    # Insert the filter to add the ClassFlags dimension
-                    p.insert(1, cloud.addClassFlags())
+        if self.cloud:
+            # If there is the ferry filter attribute in the tile instance
+            if not self.cloud.classFlags:
+                # Insert the filter to add the ClassFlags dimension
+                p.insert(1, cloud.addClassFlags())
 
-            # The pipeline must contain a reader AND a writer
-            if not reader:
-                sys.exit("Please add a reader to your pipeline.")
-            elif not writer:
-                sys.exit("Please add a writer to your pipeline.")
+        # The pipeline must contain a reader AND a writer
+        if not reader:
+            sys.exit("Please add a reader to your pipeline.")
+        elif not writer:
+            sys.exit("Please add a writer to your pipeline.")
 
-            # If the input is a single file
-            if single_file:
-                # Add a crop filter to divide the cloud in small tiles
-                p.insert(1, cloud.crop(self.bounds))
+        # If the input is a single file
+        if single_file:
+            # Add a crop filter to divide the cloud in small tiles
+            p.insert(1, cloud.crop(self.bounds))
 
-            # Add the filename option in the pipeline's reader to get the right file
-            reader[0]['filename'] = self.filepath
-            # Add the filename option in the pipeline's writer to write the result in the right file
-            writer[0]['filename'] = output_filename + extension
+        # Add the filename option in the pipeline's reader to get the right file
+        reader[0]['filename'] = self.filepath
+        # Add the filename option in the pipeline's writer to write the result in the right file
+        writer[0]['filename'] = output_filename + extension
 
-            p = pdal.Pipeline(json.dumps(p))
+        p = pdal.Pipeline(json.dumps(p))
 
         return p, temp_name
 

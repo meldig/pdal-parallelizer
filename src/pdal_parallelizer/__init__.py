@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import os.path
 import click
@@ -10,6 +11,7 @@ from os import listdir
 import do
 import file_manager
 import cloud
+import tile
 from matplotlib import pyplot as plt
 import sys
 import ntpath
@@ -48,7 +50,7 @@ def config_dask(n_workers, threads_per_worker, timeout):
     cfg.set({'interface': 'lo'})
     cfg.set({'distributed.scheduler.worker-ttl': None})
     cfg.set({'distributed.comm.timeouts.connect': timeout})
-    cluster = LocalCluster(n_workers=n_workers, threads_per_worker=threads_per_worker)
+    cluster = LocalCluster(n_workers=n_workers, threads_per_worker=threads_per_worker, silence_logs=logging.ERROR)
     client = Client(cluster)
     return client
 
@@ -120,8 +122,8 @@ def process_pipelines(
             int(bounds['maxy'] - bounds['miny'])
         )
 
-        nTilesX = ceil(distX/tile_size[0])
-        nTilesY = ceil(distY/tile_size[0])
+        nTilesX = ceil(distX / tile_size[0])
+        nTilesY = ceil(distY / tile_size[0])
 
         if nTilesX * nTilesY > n_workers:
             answer = query_yes_no(
@@ -193,11 +195,14 @@ def process_pipelines(
         delayed = client.compute(delayed)
         progress(delayed)
 
+    del delayed
+
     file_manager.getEmptyWeight(output_directory=output)
 
     if merge_tiles and len(listdir(output)) > 1:
         input_filename = ntpath.basename(input_dir).split('.')[0]
-        merge = cloud.merge(output, input_filename)
+        writers = tile.get_writers(tile.load_pipeline(pipeline))
+        merge = cloud.merge(output, input_filename, writers)
         if merge is not None:
             merge_ppln = pdal.Pipeline(merge)
             merge_ppln.execute()
@@ -217,6 +222,5 @@ if __name__ == "__main__":
         tile_size=(50, 50),
         timeout=500,
         n_workers=6,
-        merge_tiles=True,
-        remove_tiles=True
+        merge_tiles=True
     )

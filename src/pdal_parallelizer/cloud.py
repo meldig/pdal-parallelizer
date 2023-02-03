@@ -19,23 +19,35 @@ def crop(bounds):
     return parsed
 
 
-def merge(output_dir, filename):
+def merge(output_dir, filename, writers):
     outputs = ""
+    # Default values according to the pdal writers.las documentation
     compression = 'none'
+    minor_version = 2
+    dataformat_id = 3
+
     for f in listdir(output_dir):
         if f.split('.').count('png') <= 0:
             outputs += '"' + output_dir + '/' + f + '",'
 
     if outputs != "":
-        extension = listdir(output_dir)[0].split('.')[1]
+        extension = writers[0]['type'].split('.')[1]
         if extension == 'laz':
             writers_extension = 'las'
             compression = 'laszip'
         else:
             writers_extension = extension
 
+        try:
+            minor_version = writers[0]['minor_version']
+            dataformat_id = writers[0]['dataformat_id']
+        except KeyError:
+            pass
+
         merge = '[' + outputs + '{"type": "writers.' + writers_extension + '", "filename":"' + output_dir + '/' + \
-                filename + '.' + extension + '","extra_dims": "all", "compression": "' + compression + '"}]'
+                filename + '.' + extension + '","extra_dims": "all", "compression": "' + compression + '", ' + \
+                '"minor_version": ' + str(minor_version) + ', "dataformat_id": ' + str(dataformat_id) + '}]'
+
         return merge
 
 
