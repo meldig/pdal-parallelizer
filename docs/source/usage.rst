@@ -14,6 +14,8 @@ This file look like this :
         "pipeline": "Your pipeline path"
     }
 
+**If you want to process a single file, you will have to put the path of it in the input value of the config path.**
+
 pdal-parallelizer dry runs
 ..........................
 
