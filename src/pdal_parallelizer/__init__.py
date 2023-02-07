@@ -50,6 +50,7 @@ def config_dask(n_workers, threads_per_worker, timeout):
     cfg.set({'interface': 'lo'})
     cfg.set({'distributed.scheduler.worker-ttl': None})
     cfg.set({'distributed.comm.timeouts.connect': timeout})
+    cfg.set({'distributed.scheduler.worker-saturation': 1.0})
     cluster = LocalCluster(n_workers=n_workers, threads_per_worker=threads_per_worker, silence_logs=logging.ERROR)
     client = Client(cluster)
     return client
@@ -114,6 +115,22 @@ def process_pipelines(
             )
             if not answer:
                 return
+
+    if input_type == 'dir':
+        if input_dir == output or input_dir == temp:
+            answer = query_yes_no(
+                f'WARNING - Your input folder is the same as your output or temp folder. This could be a problem. '
+                f'Please choose three separate directories.\n Do you want to continue ? '
+            )
+            if not answer:
+                return
+
+    if len(os.listdir(output)) > 0:
+        answer = query_yes_no(
+            f'WARNING - Your output directory is not empty.\n Do you want to continue ? '
+        )
+        if not answer:
+            return
 
         infos = cloud.compute_quickinfo(input_dir)
         bounds = infos['summary']['bounds']
@@ -213,3 +230,13 @@ def process_pipelines(
                     os.remove(join(output, f))
 
     plt.savefig(output + '/memory-usage.png') if diagnostic else None
+
+
+if __name__ == '__main__':
+    process_pipelines(
+        config="D:\\data_dev\\pdal-parallelizer\\config.json",
+        input_type="single",
+        timeout=500,
+        tile_size=(20, 20),
+        n_workers=6
+    )
