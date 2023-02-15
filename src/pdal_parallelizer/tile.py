@@ -37,6 +37,11 @@ def check_if_streamable(pipeline):
     if not pdal_pipeline.streamable:
         print("\nINFO - Your pipeline contains stages that are not streamable, these will be executed in standard "
               "mode. See https://pdal.io/en/latest/pipeline.html#id2 for more details.\n")
+        return False
+    else:
+        print("\nINFO - Your pipeline is streamable, it will be executed in stream mode. See "
+              "https://pdal.io/en/latest/pipeline.html#id2 for more details.\n")
+        return True
 
 
 class Tile:

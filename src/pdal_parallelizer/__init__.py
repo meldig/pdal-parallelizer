@@ -99,7 +99,9 @@ def process_pipelines(
         temp = config_file.get('temp')
         pipeline = config_file.get('pipeline')
 
-    if n_workers >= os.cpu_count():
+    streamable = tile.check_if_streamable(pipeline)
+
+    if n_workers >= os.cpu_count() and not streamable:
         answer = query_yes_no(
             f'\nWARNING - You choose to launch {n_workers} workers but your machine has only {os.cpu_count()}'
             f' CPUs, please reduce the number of workers.\nDo you want to continue ?'
@@ -116,24 +118,26 @@ def process_pipelines(
             if not answer:
                 return
 
-        infos = cloud.compute_quickinfo(input_dir)
-        bounds = infos['summary']['bounds']
-        distX, distY = (
-            int(bounds['maxx'] - bounds['minx']),
-            int(bounds['maxy'] - bounds['miny'])
-        )
+        if not streamable:
 
-        nTilesX = ceil(distX / tile_size[0])
-        nTilesY = ceil(distY / tile_size[0])
-
-        if nTilesX * nTilesY > n_workers:
-            answer = query_yes_no(
-                f'WARNING - With this size of tiles and this number of workers, each worker will have more than one task'
-                f' and it can blow up the distributed memory. Please choose a larger size for your tiles or increase '
-                f'your number of workers.\nDo you want to continue ?'
+            infos = cloud.compute_quickinfo(input_dir)
+            bounds = infos['summary']['bounds']
+            distX, distY = (
+                int(bounds['maxx'] - bounds['minx']),
+                int(bounds['maxy'] - bounds['miny'])
             )
-            if not answer:
-                return
+
+            nTilesX = ceil(distX / tile_size[0])
+            nTilesY = ceil(distY / tile_size[0])
+
+            if nTilesX * nTilesY > n_workers:
+                answer = query_yes_no(
+                    f'WARNING - With this size of tiles and this number of workers, each worker will have more than one task'
+                    f' and it can blow up the distributed memory. Please choose a larger size for your tiles or increase '
+                    f'your number of workers.\nDo you want to continue ?'
+                )
+                if not answer:
+                    return
 
     if input_type == 'dir':
         if input_dir == output or input_dir == temp:
@@ -146,7 +150,7 @@ def process_pipelines(
 
     if len(os.listdir(output)) > 0:
         answer = query_yes_no(
-            f'WARNING - Your output directory is not empty.\n Do you want to continue ? '
+            f'WARNING - Your output directory is not empty.\nDo you want to continue ? '
         )
         if not answer:
             return
@@ -156,8 +160,6 @@ def process_pipelines(
 
     if not os.path.exists(output):
         os.mkdir(output)
-
-    tile.check_if_streamable(pipeline)
 
     # If there is some temp file in the temp directory, these are processed
     if len(listdir(temp)) != 0:
