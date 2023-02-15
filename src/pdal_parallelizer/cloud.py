@@ -8,7 +8,7 @@ A Cloud is composed of :
 
 import subprocess
 import json
-from .bounds import Bounds
+from bounds import Bounds
 from os import listdir
 
 

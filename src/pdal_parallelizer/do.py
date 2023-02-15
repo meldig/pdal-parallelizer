@@ -6,9 +6,9 @@ Responsible for all the executions, serializations or creations of object we nee
 
 import dask
 from dask.distributed import Lock
-from . import tile
-from . import cloud
-from . import bounds
+import tile
+import cloud
+import bounds
 import pickle
 import os
 
@@ -21,7 +21,12 @@ def process(pipeline, temp_dir=None):
             # Get the temp file associated with the pipeline
             temp_file = temp_dir + '/' + str(pipeline[1]) + '.pickle'
         # Execute the pipeline
-        pipeline[0].execute()
+        if pipeline[0].streamable:
+            pipeline[0].execute_streaming()
+        else:
+            pipeline[0].execute()
+
+        del pipeline
         try:
             # Remove the temp file
             os.remove(temp_file)
@@ -29,7 +34,12 @@ def process(pipeline, temp_dir=None):
             pass
     # Don't need to get and suppress the temp file if it's a dry run
     else:
-        pipeline[0].execute()
+        if pipeline[0].streamable:
+            pipeline[0].execute_streaming()
+        else:
+            pipeline[0].execute()
+
+        del pipeline
 
 
 def process_serialized_pipelines(temp_dir, iterator):

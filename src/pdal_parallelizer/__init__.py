@@ -8,10 +8,10 @@ from dask import config as cfg
 from dask.distributed import LocalCluster, Client, progress
 from distributed.diagnostics import MemorySampler
 from os import listdir
-from . import do
-from . import file_manager
-from . import cloud
-from . import tile
+import do
+import file_manager
+import cloud
+import tile
 from matplotlib import pyplot as plt
 import sys
 import ntpath
@@ -116,22 +116,6 @@ def process_pipelines(
             if not answer:
                 return
 
-    if input_type == 'dir':
-        if input_dir == output or input_dir == temp:
-            answer = query_yes_no(
-                f'WARNING - Your input folder is the same as your output or temp folder. This could be a problem. '
-                f'Please choose three separate directories.\n Do you want to continue ? '
-            )
-            if not answer:
-                return
-
-    if len(os.listdir(output)) > 0:
-        answer = query_yes_no(
-            f'WARNING - Your output directory is not empty.\n Do you want to continue ? '
-        )
-        if not answer:
-            return
-
         infos = cloud.compute_quickinfo(input_dir)
         bounds = infos['summary']['bounds']
         distX, distY = (
@@ -150,6 +134,22 @@ def process_pipelines(
             )
             if not answer:
                 return
+
+    if input_type == 'dir':
+        if input_dir == output or input_dir == temp:
+            answer = query_yes_no(
+                f'WARNING - Your input folder is the same as your output or temp folder. This could be a problem. '
+                f'Please choose three separate directories.\n Do you want to continue ? '
+            )
+            if not answer:
+                return
+
+    if len(os.listdir(output)) > 0:
+        answer = query_yes_no(
+            f'WARNING - Your output directory is not empty.\n Do you want to continue ? '
+        )
+        if not answer:
+            return
 
     if not os.path.exists(temp):
         os.mkdir(temp)
@@ -236,7 +236,7 @@ if __name__ == '__main__':
     process_pipelines(
         config="D:\\data_dev\\pdal-parallelizer\\config.json",
         input_type="single",
+        tile_size=(35, 35),
         timeout=500,
-        tile_size=(20, 20),
         n_workers=6
     )
