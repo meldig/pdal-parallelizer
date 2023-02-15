@@ -31,6 +31,14 @@ def get_writers(pipeline):
     return list(filter(lambda x: x['type'].startswith('writers'), pipeline))
 
 
+def check_if_streamable(pipeline):
+    p = load_pipeline(pipeline)
+    pdal_pipeline = pdal.Pipeline(json.dumps(p))
+    if not pdal_pipeline.streamable:
+        print("\nINFO - Your pipeline contains stages that are not streamable, these will be executed in standard "
+              "mode. See https://pdal.io/en/latest/pipeline.html#id2 for more details.\n")
+
+
 class Tile:
     def __init__(self, filepath, output_dir, json_pipeline, name=None, bounds=None, buffer=None, remove_buffer=False, cloud_object=None):
         self.filepath = filepath

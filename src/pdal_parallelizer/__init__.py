@@ -157,6 +157,8 @@ def process_pipelines(
     if not os.path.exists(output):
         os.mkdir(output)
 
+    tile.check_if_streamable(pipeline)
+
     # If there is some temp file in the temp directory, these are processed
     if len(listdir(temp)) != 0:
         click.echo(
