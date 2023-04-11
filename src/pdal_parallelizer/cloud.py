@@ -1,105 +1,75 @@
-"""
-Cloud class.
-
-A Cloud is composed of :
-- Its path (filepath)
-- Its limits (bounds)
-"""
-
 import subprocess
 import json
+
+from pdal_parallelizer import tile
+
 from bounds import Bounds
-from os import listdir
-
-
-def crop(bounds):
-    crop = '{"type": "filters.crop"}'
-    parsed = json.loads(crop)
-    parsed['bounds'] = str(bounds)
-    return parsed
-
-
-def merge(output_dir, filename, writers):
-    outputs = ""
-    # Default values according to the pdal writers.las documentation
-    compression = 'none'
-    minor_version = 2
-    dataformat_id = 3
-
-    for f in listdir(output_dir):
-        if f.split('.').count('png') <= 0:
-            outputs += '"' + output_dir + '/' + f + '",'
-
-    if outputs != "":
-        extension = listdir(output_dir)[0].split('.')[1]
-        if extension == 'laz':
-            writers_extension = 'las'
-            compression = 'laszip'
-        else:
-            writers_extension = extension
-
-        try:
-            minor_version = writers[0]['minor_version']
-            dataformat_id = writers[0]['dataformat_id']
-        except KeyError:
-            pass
-
-        merge = '[' + outputs + '{"type": "writers.' + writers_extension + '", "filename":"' + output_dir + '/' + \
-                filename + '.' + extension + '","extra_dims": "all", "compression": "' + compression + '", ' + \
-                '"minor_version": ' + str(minor_version) + ', "dataformat_id": ' + str(dataformat_id) + '}]'
-
-        return merge
-
-
-def addClassFlags():
-    ferry = '{"type": "filters.ferry", "dimensions": "=>ClassFlags"}'
-    return json.loads(ferry)
-
-
-def compute_quickinfo(filepath):
-    """Returns some information about the cloud."""
-    # Get the cloud information
-    pdal_info = subprocess.run(['pdal', 'info', filepath, '--summary'],
-                               stderr=subprocess.PIPE,
-                               stdout=subprocess.PIPE)
-    info = json.loads(pdal_info.stdout.decode())
-
-    return info
+from tile import Tile
 
 
 class Cloud:
     def __init__(self, filepath, bounds=None):
         self.filepath = filepath
-        self.info = compute_quickinfo(self.filepath)
-        self.classFlags = self.hasClassFlags()
+        self.info = self.compute_quick_info()
 
-        # Get the cloud information to set its bounds
         if bounds:
-            minx, miny, maxx, maxy = bounds.minx, bounds.miny, bounds.maxx, bounds.maxy
+            self.bounds = bounds
         else:
-            bounds_dict = self.info['summary']['bounds']
-            minx, miny, = (
-                bounds_dict['minx'],
-                bounds_dict['miny']
-            )
+            bounds_dict = self.info["summary"]["bounds"]
+            self.bounds = Bounds(bounds_dict["minx"],
+                                 bounds_dict["miny"],
+                                 bounds_dict["maxx"],
+                                 bounds_dict["maxy"])
 
-            maxx, maxy = (
-                bounds_dict['maxx'],
-                bounds_dict['maxy']
-            )
+    def compute_quick_info(self) -> dict:
+        pdal_info = subprocess.run(["pdal", "info", self.filepath, "--summary"],
+                                   stderr=subprocess.PIPE,
+                                   stdout=subprocess.PIPE)
 
-        # Create bounds for the cloud
-        self.bounds = Bounds(minx, miny, maxx, maxy)
+        info = json.loads(pdal_info.stdout.decode())
 
-    # Get the number of points in the cloud
-    def getCount(self):
-        return self.info['summary']['num_points']
+        return info
 
-    def hasClassFlags(self):
-        """Check if the cloud has the ClassFlags dimension"""
-        info = compute_quickinfo(self.filepath)
-        dimensions = info['summary']['dimensions']
-        return 'ClassFlags' in dimensions
+    def get_num_points(self) -> int:
+        return self.info["summary"]["num_points"]
 
-    def __str__(self):
-        return f'Cloud - {self.bounds}'
+    def has_ClassFlags_dimension(self) -> bool:
+        dimensions = self.info["summary"]["dimensions"]
+        return "ClassFlags" in dimensions
+
+    def split(self, tile_size, n_tiles=None) -> list:
+        current_min_x = self.bounds.min_x
+        current_min_y = self.bounds.min_y
+        current_max_x = self.bounds.max_x
+        current_max_y = self.bounds.max_y
+
+        tiles = []
+
+        # This variable will count the number of tiles we cut in the Cloud in the case of a dry run execution
+        tiles_created = 0
+
+        while current_max_x <= self.bounds.max_x and current_max_y <= self.bounds.max_y and (tiles_created < n_tiles if n_tiles else True):
+            tile_bounds = Bounds(current_min_x, current_min_y, current_max_x, current_max_y)
+            name = str(int(tile_bounds.min_x)) + "_" + str(int(tile_bounds.min_y))
+            t = tile.Tile(name, self, tile_bounds)
+
+            current_min_x += tile_size[0]
+            current_max_x += tile_size[0]
+
+            if current_max_x >= self.bounds.max_x:
+                if tile_bounds.max_x < self.bounds.max_x:
+                    current_max_x = tile_bounds.max_x + (self.bounds.max_x - tile_bounds.max_x)
+                else:
+                    current_min_x = self.bounds.min_x
+                    current_max_x = current_min_x + tile_size[0]
+                    current_min_y += tile_size[1]
+                    current_max_y += tile_size[1]
+
+            if current_max_y > self.bounds.max_y:
+                if tile_bounds.max_y < self.bounds.max_y:
+                    current_max_y = tile_bounds.max_y + (self.bounds.max_y - tile_bounds.max_y)
+
+            tiles.append(t)
+            tiles_created += 1
+
+        return tiles
