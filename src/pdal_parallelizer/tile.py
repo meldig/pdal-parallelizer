@@ -4,10 +4,10 @@ from .pipeline_wrapper import PipelineWrapper
 
 
 class Tile:
-    def __init__(self, name, cloud, bounds, pipeline, output, buffer=None, remove_buffer=None):
-        self.name = name
+    def __init__(self, cloud, bounds, pipeline, output, buffer=None, remove_buffer=None):
         self.cloud = cloud
         self.bounds = bounds
+        self.name = str(int(self.bounds.min_x)) + '_' + str(int(self.bounds.min_y))
         self.pipeline_wrapper = PipelineWrapper(pipeline)
         self.output = output
         self.buffer = buffer if buffer else None
