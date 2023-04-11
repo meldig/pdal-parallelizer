@@ -14,13 +14,14 @@ import subprocess
 import json
 
 
-def getFiles(input_directory, nFiles=None):
+def get_files(input_directory, nFiles=None):
     """Returns the files of the input directory"""
+    files = []
     # If it's not a dry run, all the files are returned
     if not nFiles:
         try:
             for f in listdir(input_directory):
-                yield join(input_directory, f)
+                files.append(join(input_directory, f))
         except NotADirectoryError:
             sys.exit("The input attribute of your configuration file does not designate a directory. Maybe you are "
                      "trying to process a single file ? Check your -it option.")
@@ -35,23 +36,28 @@ def getFiles(input_directory, nFiles=None):
             filesSize.sort(key=lambda tup: tup[1], reverse=True)
             # Get the first nFiles
             for i in range(nFiles):
-                yield filesSize[i][0]
+                files.append(filesSize[i][0])
         except NotADirectoryError:
             sys.exit("The input attribute of your configuration file does not designate a directory. Maybe you are "
                      "trying to process a single file ? Check your -it option.")
 
+    return files
 
-def getSerializedPipelines(temp_directory):
+
+def get_serialized_pipelines(temp_directory):
     """Returns the pipelines that have been serialized"""
+    pipelines = []
     for tmp in listdir(temp_directory):
         # Open the serialized pipeline
         with open(join(temp_directory, tmp), 'rb') as p:
             # Deserialize it
             pipeline = pickle.load(p)
-        yield pipeline
+            pipelines.append(pipeline)
+
+    return pipelines
 
 
-def getEmptyWeight(output_directory):
+def get_lightweight_files(output_directory):
     # Get the output directory files size in bytes
     weights_bytes = [os.path.getsize(join(output_directory, f)) for f in listdir(output_directory)]
     # Convert it in ko
@@ -61,13 +67,13 @@ def getEmptyWeight(output_directory):
         deciles = [round(q, 2) for q in statistics.quantiles(weights_ko, n=10)]
         # And retrieve files whose weight is in the first decile
         weight_files = [join(output_directory, f) for f in listdir(output_directory) if round(os.path.getsize(join(output_directory, f)) / 1024, 2) <= deciles[0]]
-        removeEmptyFiles(weight_files)
+        remove_empty_files(weight_files)
     else:
         pass
         #removeEmptyFiles([join(output_directory, f) for f in listdir(output_directory)])
 
 
-def removeEmptyFiles(files):
+def remove_empty_files(files):
     # For each file
     for f in files:
         # Run pdal info

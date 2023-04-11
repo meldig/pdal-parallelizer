@@ -25,12 +25,16 @@ def execute_stages_standard(stages):
 def execute_stages_streaming(array, stages):
     filters = stages.pop(0).pipeline(array)
     iterator = filters.iterator()
+    arrays = []
 
     for arr in iterator:
         for stage in stages:
             pipeline = stage.pipeline(arr)
             pipeline.execute()
             arr = pipeline.arrays[0]
+        arrays.append(arr)
+
+    return arrays
 
 
 @dask.delayed
@@ -73,6 +77,25 @@ def process_several_clouds(files, pipeline, output, temp, buffer=None, remove_bu
 
         array = execute_stages_standard(stages)
         result = write_cloud(array, writers, pipeline, temp)
+        delayed_tasks.append(result)
+
+    return delayed_tasks
+
+
+@dask.delayed
+def process_single_cloud(tiles, image_array, temp, dry_run=None):
+    delayed_tasks = []
+
+    for tile in tiles:
+        p = tile.link_pipeline(True)
+
+        stages = p.stages
+        stages.pop(0)
+
+        if not dry_run:
+            serialize(p, temp)
+
+        result = execute_stages_streaming(image_array, stages)
         delayed_tasks.append(result)
 
     return delayed_tasks

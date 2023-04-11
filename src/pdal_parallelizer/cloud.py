@@ -2,6 +2,7 @@ import subprocess
 import json
 from .bounds import Bounds
 from .tile import Tile
+from .pipeline_wrapper import PipelineWrapper
 
 
 class Cloud:
@@ -10,7 +11,7 @@ class Cloud:
         self.info = self.compute_quick_info()
 
         if bounds:
-            self.bounds = bounds
+            self.bounds = Bounds(bounds[0], bounds[1], bounds[2], bounds[3])
         else:
             bounds_dict = self.info["summary"]["bounds"]
             self.bounds = Bounds(bounds_dict["minx"],
@@ -72,3 +73,13 @@ class Cloud:
             tiles_created += 1
 
         return tiles
+
+    def load_image_array(self, pipeline) -> list:
+        wrapper = PipelineWrapper(pipeline)
+        wrapper.get_readers()["filename"] = self.filepath
+        p = wrapper.pdal_pipeline
+        print(p.toJSON())
+        stages = p.stages
+        readers = stages.pop(0).pipeline()
+        readers.execute()
+        return readers.arrays[0]
