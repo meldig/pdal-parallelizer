@@ -3,6 +3,8 @@ import logging
 import os.path
 import sys
 import click
+import dask
+
 import file_manager
 import do
 from cloud import Cloud
@@ -61,8 +63,6 @@ def process_pipelines(
         merge_tiles=None,
         remove_tiles=None
 ):
-    tasks = []
-
     with open(config, 'r') as c:
         config_file = json.load(c)
         input = config_file.get('input')
@@ -106,6 +106,5 @@ if __name__ == '__main__':
         config="D:\\data_dev\\pdal-parallelizer\\config.json",
         input_type="dir",
         timeout=500,
-        n_workers=6,
-        diagnostic=True
+        n_workers=6
     )

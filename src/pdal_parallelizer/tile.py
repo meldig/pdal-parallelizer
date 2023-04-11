@@ -1,13 +1,13 @@
 import pdal
 import json
-from .pipeline_wrapper import PipelineWrapper
+from pipeline_wrapper import PipelineWrapper
 
 
 class Tile:
-    def __init__(self, cloud, bounds, pipeline, output, buffer=None, remove_buffer=None):
+    def __init__(self, cloud, bounds, pipeline, output, buffer=None, remove_buffer=None, name=None):
         self.cloud = cloud
         self.bounds = bounds
-        self.name = str(int(self.bounds.min_x)) + '_' + str(int(self.bounds.min_y))
+        self.name = name if name else str(int(self.bounds.min_x)) + '_' + str(int(self.bounds.min_y))
         self.pipeline_wrapper = PipelineWrapper(pipeline)
         self.output = output
         self.buffer = buffer if buffer else None
@@ -46,7 +46,7 @@ class Tile:
             self.pipeline_wrapper.add_crop_filter(self.bounds)
 
         readers[0]["filename"] = self.cloud.filepath
-        writers[0]["filename"] = self.output + self.name + extension
+        writers[0]["filename"] = self.output + "/" + self.name + extension
 
         return pdal.Pipeline(json.dumps(p))
 

@@ -38,13 +38,12 @@ def execute_stages_streaming(array, stages):
 
 
 @dask.delayed
-def write_cloud(array, writers, pipeline=None, temp=None):
+def write_cloud(array, writers, name=None, temp=None):
     writers.pipeline(array).execute_streaming()
     if temp:
-        os.remove(temp + '/' + pipeline.name + ".pickle")
+        os.remove(temp + '/' + name + ".pickle")
 
 
-@dask.delayed
 def process_serialized_pipelines(pipelines, temp):
     delayed_tasks = []
 
@@ -60,29 +59,27 @@ def process_serialized_pipelines(pipelines, temp):
     return delayed_tasks
 
 
-@dask.delayed
 def process_several_clouds(files, pipeline, output, temp, buffer=None, remove_buffer=None, dry_run=None):
     delayed_tasks = []
 
     for file in files:
         c = Cloud(file)
-        t = Tile(c, c.bounds, pipeline, output, buffer, remove_buffer)
+        t = Tile(c, c.bounds, pipeline, output, buffer, remove_buffer, os.path.basename(c.filepath).split(".")[0])
         p = t.link_pipeline(False)
 
         stages = p.stages
         writers = stages.pop()
 
         if not dry_run:
-            serialize(pipeline, temp)
+            serialize(pipeline, t.name, temp)
 
         array = execute_stages_standard(stages)
-        result = write_cloud(array, writers, pipeline, temp)
+        result = write_cloud(array, writers, t.name, temp)
         delayed_tasks.append(result)
 
     return delayed_tasks
 
 
-@dask.delayed
 def process_single_cloud(tiles, image_array, temp, dry_run=None):
     delayed_tasks = []
 
@@ -101,8 +98,8 @@ def process_single_cloud(tiles, image_array, temp, dry_run=None):
     return delayed_tasks
 
 
-def serialize(pipeline, temp):
-    temp_file = temp + '/' + pipeline.name + ".pickle"
+def serialize(pipeline, tile_name, temp):
+    temp_file = temp + '/' + tile_name + ".pickle"
     with open(temp_file, 'wb') as outfile:
         # Serialize the pipeline
         pickle.dump(pipeline, outfile)

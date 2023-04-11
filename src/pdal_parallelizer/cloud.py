@@ -1,8 +1,8 @@
 import subprocess
 import json
-from .bounds import Bounds
-from .tile import Tile
-from .pipeline_wrapper import PipelineWrapper
+from bounds import Bounds
+from tile import Tile
+from pipeline_wrapper import PipelineWrapper
 
 
 class Cloud:
