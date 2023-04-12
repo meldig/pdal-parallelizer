@@ -105,7 +105,6 @@ def process_several_clouds(files, pipeline, output, temp, buffer=None, remove_bu
 
 def cut_image_array(tiles, image_array, temp, dry_run=None):
     results = []
-    n_arrays = 0
 
     for tile in tiles:
         array = image_array[np.where((image_array["X"] > tile.bounds.min_x) &
@@ -119,15 +118,7 @@ def cut_image_array(tiles, image_array, temp, dry_run=None):
             serialize(stages, tile.name, temp)
 
         stages.pop(0)
-
         results.append((array, stages, tile.name))
-
-        if dry_run is not None:
-            n_arrays += 1
-            if n_arrays == dry_run:
-                print("blabla")
-
-    print(n_arrays)
 
     return results
 

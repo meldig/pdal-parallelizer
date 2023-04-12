@@ -9,7 +9,7 @@ import file_manager
 import do
 from cloud import Cloud
 from dask import config as cfg
-from dask.distributed import LocalCluster, Client, progress
+from dask.distributed import LocalCluster, Client, performance_report
 from distributed.diagnostics import MemorySampler
 
 
@@ -82,15 +82,39 @@ def process_pipelines(
         data = do.cut_image_array(tiles, image_array, temp, dry_run)
 
         print("Starting parallelization\n")
-        for (array, stages, tile_name) in data:
-            if len(array) > 0:
-                big_future = client.scatter(array)
-                futures.append(client.submit(do.execute_stages_streaming, big_future, stages, tile_name, temp, dry_run))
-            else:
-                if not dry_run:
-                    os.remove(temp + "/" + tile_name + ".pickle")
 
-        client.gather(futures)
+        # for (array, stages, tile_name) in data:
+        #     if len(array) > 0:
+        #         big_future = client.scatter(array)
+        #         futures.append(client.submit(do.execute_stages_streaming, big_future, stages, tile_name, temp, dry_run))
+        #     else:
+        #         if not dry_run:
+        #             os.remove(temp + "/" + tile_name + ".pickle")
+
+        if diagnostic:
+            with performance_report(filename="D:/data_dev/street_pointcloud_process/output/dask-report.html"):
+                for (array, stages, tile_name) in data:
+                    if len(array) > 0:
+                        big_future = client.scatter(array)
+                        futures.append(
+                            client.submit(do.execute_stages_streaming, big_future, stages, tile_name, temp, dry_run))
+                    else:
+                        if not dry_run:
+                            os.remove(temp + "/" + tile_name + ".pickle")
+
+                client.gather(futures)
+        else:
+            with performance_report(filename="D:/data_dev/street_pointcloud_process/output/dask-report.html"):
+                for (array, stages, tile_name) in data:
+                    if len(array) > 0:
+                        big_future = client.scatter(array)
+                        futures.append(
+                            client.submit(do.execute_stages_streaming, big_future, stages, tile_name, temp, dry_run))
+                    else:
+                        if not dry_run:
+                            os.remove(temp + "/" + tile_name + ".pickle")
+
+                client.gather(futures)
 
     # else:
     #     if len(os.listdir(temp)) != 0:
@@ -121,8 +145,8 @@ if __name__ == '__main__':
     process_pipelines(
         config="D:\\data_dev\\pdal-parallelizer\\config.json",
         input_type="single",
-        tile_size=(35, 35),
+        tile_size=(20, 20),
         timeout=500,
         n_workers=6,
-        dry_run=5
+        diagnostic=True
     )

@@ -51,7 +51,7 @@ class Cloud:
         # This variable will count the number of tiles we cut in the Cloud in the case of a dry run execution
         tiles_created = 0
 
-        while current_max_x <= self.bounds.max_x and current_max_y <= self.bounds.max_y and (tiles_created < n_tiles if n_tiles else True):
+        while current_max_x <= self.bounds.max_x and current_max_y <= self.bounds.max_y and (tiles_created <= n_tiles if n_tiles else True):
             tile_bounds = Bounds(current_min_x, current_min_y, current_max_x, current_max_y)
             name = str(int(tile_bounds.min_x)) + "_" + str(int(tile_bounds.min_y))
             t = Tile(self, tile_bounds, pipeline, output, name=name)
