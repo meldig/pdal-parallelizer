@@ -1,9 +1,9 @@
 import os
 import dask
 import pickle
+import numpy as np
 from cloud import Cloud
 from tile import Tile
-import time
 
 
 @dask.delayed
@@ -22,11 +22,14 @@ def execute_stages_standard(stages):
     return arr
 
 
-def execute_stages_streaming(array, stages):
+def execute_stages_streaming(array, stages, tile_name, temp, dry_run=None):
     for stage in stages:
         pipeline = stage.pipeline(array)
         pipeline.execute()
         array = pipeline.arrays[0]
+
+    if not dry_run:
+        os.remove(temp + "/" + tile_name + ".pickle")
 
     # filters = stages.pop(0).pipeline(array)
     # iterator = filters.iterator()
@@ -98,6 +101,35 @@ def process_several_clouds(files, pipeline, output, temp, buffer=None, remove_bu
 #         delayed_tasks.append(result)
 #
 #     return delayed_tasks
+
+
+def cut_image_array(tiles, image_array, temp, dry_run=None):
+    results = []
+    n_arrays = 0
+
+    for tile in tiles:
+        array = image_array[np.where((image_array["X"] > tile.bounds.min_x) &
+                                     (image_array["X"] < tile.bounds.max_x) &
+                                     (image_array["Y"] > tile.bounds.min_y) &
+                                     (image_array["Y"] < tile.bounds.max_y))]
+
+        stages = tile.link_pipeline(True).stages
+
+        if not dry_run:
+            serialize(stages, tile.name, temp)
+
+        stages.pop(0)
+
+        results.append((array, stages, tile.name))
+
+        if dry_run is not None:
+            n_arrays += 1
+            if n_arrays == dry_run:
+                print("blabla")
+
+    print(n_arrays)
+
+    return results
 
 
 def serialize(stages, tile_name, temp):

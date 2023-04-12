@@ -79,44 +79,42 @@ def process_pipelines(
         tiles = c.split(tile_size, pipeline, output, dry_run)
         print("Opening the cloud.\n")
         image_array = c.load_image_array(pipeline)
-
-        for tile in tiles:
-            array = image_array[np.where((image_array["X"] > tile.bounds.min_x) &
-                                         (image_array["X"] < tile.bounds.max_x) &
-                                         (image_array["Y"] > tile.bounds.min_y) &
-                                         (image_array["Y"] < tile.bounds.max_y))]
-            stages = tile.link_pipeline(True).stages
-            stages.pop(0)
-            if len(array) > 0:
-                big_future = client.scatter(array)
-                futures.append(client.submit(do.execute_stages_streaming, big_future, stages))
+        data = do.cut_image_array(tiles, image_array, temp, dry_run)
 
         print("Starting parallelization\n")
-        results = client.gather(futures)
-        progress(results)
-    else:
-        if len(os.listdir(temp)) != 0:
-            print("Something went wrong during previous execution, there is some temp files in your temp " +
-                  "directory.\nBeginning of the execution\n")
-            serialized_data = file_manager.get_serialized_data(temp)
-            tasks = do.process_serialized_stages(serialized_data, temp)
-        else:
-            print("Beginning of the execution.\n")
-            if input_type == "dir":
-                files = file_manager.get_files(input, dry_run)
-                tasks = do.process_several_clouds(files, pipeline, output, temp, buffer, remove_buffer, dry_run)
+        for (array, stages, tile_name) in data:
+            if len(array) > 0:
+                big_future = client.scatter(array)
+                futures.append(client.submit(do.execute_stages_streaming, big_future, stages, tile_name, temp, dry_run))
+            else:
+                if not dry_run:
+                    os.remove(temp + "/" + tile_name + ".pickle")
 
-        print("Starting parallelization.\n")
+        client.gather(futures)
 
-        if diagnostic:
-            ms = MemorySampler()
-            with ms.sample(label="execution", client=client):
-                future = client.persist(tasks)
-                progress(future)
-            ms.plot()
-        else:
-            future = client.persist(tasks)
-            progress(future)
+    # else:
+    #     if len(os.listdir(temp)) != 0:
+    #         print("Something went wrong during previous execution, there is some temp files in your temp " +
+    #               "directory.\nBeginning of the execution\n")
+    #         serialized_data = file_manager.get_serialized_data(temp)
+    #         tasks = do.process_serialized_stages(serialized_data, temp)
+    #     else:
+    #         print("Beginning of the execution.\n")
+    #         if input_type == "dir":
+    #             files = file_manager.get_files(input, dry_run)
+    #             tasks = do.process_several_clouds(files, pipeline, output, temp, buffer, remove_buffer, dry_run)
+    #
+    #     print("Starting parallelization.\n")
+    #
+    #     if diagnostic:
+    #         ms = MemorySampler()
+    #         with ms.sample(label="execution", client=client):
+    #             future = client.persist(tasks)
+    #             progress(future)
+    #         ms.plot()
+    #     else:
+    #         future = client.persist(tasks)
+    #         progress(future)
 
 
 if __name__ == '__main__':
@@ -125,5 +123,6 @@ if __name__ == '__main__':
         input_type="single",
         tile_size=(35, 35),
         timeout=500,
-        n_workers=6
+        n_workers=6,
+        dry_run=5
     )
