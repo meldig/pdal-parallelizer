@@ -75,8 +75,8 @@ def process_pipelines(
     if len(os.listdir(temp)) != 0:
         print("Something went wrong during previous execution, there is some temp files in your temp " +
               "directory.\nBeginning of the execution\n")
-        pipelines = file_manager.get_serialized_pipelines(temp)
-        tasks = do.process_serialized_pipelines(pipelines, temp)
+        serialized_data = file_manager.get_serialized_data(temp)
+        tasks = do.process_serialized_stages(serialized_data, temp)
     else:
         print("Beginning of the execution.\n")
         if input_type == "dir":

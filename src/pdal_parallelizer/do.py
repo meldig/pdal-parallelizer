@@ -44,15 +44,13 @@ def write_cloud(array, writers, name=None, temp=None):
         os.remove(temp + '/' + name + ".pickle")
 
 
-def process_serialized_pipelines(pipelines, temp):
+def process_serialized_stages(serialized_data, temp):
     delayed_tasks = []
 
-    for pipeline in pipelines:
-        if pipeline[1] is None:
-            stages = pipeline[0].stages
-            writers = stages.pop()
-            array = execute_stages_standard(stages)
-            result = write_cloud(array, writers, pipeline[0], temp)
+    for (stages, temp_file) in serialized_data:
+        writers = stages.pop()
+        array = execute_stages_standard(stages)
+        result = write_cloud(array, writers, temp_file, temp)
 
         delayed_tasks.append(result)
 
@@ -68,11 +66,11 @@ def process_several_clouds(files, pipeline, output, temp, buffer=None, remove_bu
         p = t.link_pipeline(False)
 
         stages = p.stages
-        writers = stages.pop()
 
         if not dry_run:
-            serialize(pipeline, t.name, temp)
+            serialize(stages, t.name, temp)
 
+        writers = stages.pop()
         array = execute_stages_standard(stages)
         result = write_cloud(array, writers, t.name, temp)
         delayed_tasks.append(result)
@@ -98,8 +96,8 @@ def process_single_cloud(tiles, image_array, temp, dry_run=None):
     return delayed_tasks
 
 
-def serialize(pipeline, tile_name, temp):
+def serialize(stages, tile_name, temp):
     temp_file = temp + '/' + tile_name + ".pickle"
     with open(temp_file, 'wb') as outfile:
         # Serialize the pipeline
-        pickle.dump(pipeline, outfile)
+        pickle.dump((stages, tile_name), outfile)

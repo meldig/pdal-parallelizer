@@ -44,17 +44,17 @@ def get_files(input_directory, nFiles=None):
     return files
 
 
-def get_serialized_pipelines(temp_directory):
+def get_serialized_data(temp_directory):
     """Returns the pipelines that have been serialized"""
-    pipelines = []
+    datas = []
     for tmp in listdir(temp_directory):
         # Open the serialized pipeline
         with open(join(temp_directory, tmp), 'rb') as p:
             # Deserialize it
-            pipeline = pickle.load(p)
-            pipelines.append(pipeline)
+            data = pickle.load(p)
+            datas.append(data)
 
-    return pipelines
+    return datas
 
 
 def get_lightweight_files(output_directory):
