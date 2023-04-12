@@ -26,8 +26,6 @@ class Tile:
         self.bounds.max_y -= self.buffer[1]
 
     def link_pipeline(self, is_single_file) -> pdal.Pipeline:
-        p = self.pipeline_wrapper.loaded_pipeline
-        readers = self.pipeline_wrapper.get_readers()
         writers = self.pipeline_wrapper.get_writers()
 
         try:
@@ -45,10 +43,10 @@ class Tile:
 
             self.pipeline_wrapper.add_crop_filter(self.bounds)
 
-        readers[0]["filename"] = self.cloud.filepath
-        writers[0]["filename"] = self.output + "/" + self.name + extension
+        self.pipeline_wrapper.set_readers_filename(self.cloud.filepath)
+        self.pipeline_wrapper.set_writers_filename(self.output + "/" + self.name + extension)
 
-        return pdal.Pipeline(json.dumps(p))
+        return pdal.Pipeline(json.dumps(self.pipeline_wrapper.loaded_pipeline))
 
     def __str__(self):
         return f'{self.name} - {self.bounds}'

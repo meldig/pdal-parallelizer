@@ -1,5 +1,8 @@
 import subprocess
 import json
+
+import pdal
+
 from bounds import Bounds
 from tile import Tile
 from pipeline_wrapper import PipelineWrapper
@@ -51,7 +54,7 @@ class Cloud:
         while current_max_x <= self.bounds.max_x and current_max_y <= self.bounds.max_y and (tiles_created < n_tiles if n_tiles else True):
             tile_bounds = Bounds(current_min_x, current_min_y, current_max_x, current_max_y)
             name = str(int(tile_bounds.min_x)) + "_" + str(int(tile_bounds.min_y))
-            t = Tile(name, self, tile_bounds, pipeline, output)
+            t = Tile(self, tile_bounds, pipeline, output, name=name)
 
             current_min_x += tile_size[0]
             current_max_x += tile_size[0]
@@ -74,11 +77,10 @@ class Cloud:
 
         return tiles
 
-    def load_image_array(self, pipeline) -> list:
+    def load_image_array(self, pipeline):
         wrapper = PipelineWrapper(pipeline)
-        wrapper.get_readers()["filename"] = self.filepath
-        p = wrapper.pdal_pipeline
-        print(p.toJSON())
+        wrapper.set_readers_filename(self.filepath)
+        p = pdal.Pipeline(json.dumps(wrapper.loaded_pipeline))
         stages = p.stages
         readers = stages.pop(0).pipeline()
         readers.execute()

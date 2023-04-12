@@ -3,6 +3,7 @@ import dask
 import pickle
 from cloud import Cloud
 from tile import Tile
+import time
 
 
 @dask.delayed
@@ -21,20 +22,24 @@ def execute_stages_standard(stages):
     return arr
 
 
-@dask.delayed
 def execute_stages_streaming(array, stages):
-    filters = stages.pop(0).pipeline(array)
-    iterator = filters.iterator()
-    arrays = []
+    for stage in stages:
+        pipeline = stage.pipeline(array)
+        pipeline.execute()
+        array = pipeline.arrays[0]
 
-    for arr in iterator:
-        for stage in stages:
-            pipeline = stage.pipeline(arr)
-            pipeline.execute()
-            arr = pipeline.arrays[0]
-        arrays.append(arr)
-
-    return arrays
+    # filters = stages.pop(0).pipeline(array)
+    # iterator = filters.iterator()
+    # arrays = []
+    #
+    # for arr in iterator:
+    #     for stage in stages:
+    #         pipeline = stage.pipeline(arr)
+    #         pipeline.execute()
+    #         arr = pipeline.arrays[0]
+    #     arrays.append(arr)
+    #
+    # return arrays
 
 
 @dask.delayed
@@ -77,23 +82,22 @@ def process_several_clouds(files, pipeline, output, temp, buffer=None, remove_bu
 
     return delayed_tasks
 
-
-def process_single_cloud(tiles, image_array, temp, dry_run=None):
-    delayed_tasks = []
-
-    for tile in tiles:
-        p = tile.link_pipeline(True)
-
-        stages = p.stages
-        stages.pop(0)
-
-        if not dry_run:
-            serialize(p, temp)
-
-        result = execute_stages_streaming(image_array, stages)
-        delayed_tasks.append(result)
-
-    return delayed_tasks
+# def process_single_cloud(tiles, image_array, temp, dry_run=None):
+#     delayed_tasks = []
+#
+#     for tile in tiles:
+#         p = tile.link_pipeline(True)
+#
+#         stages = p.stages
+#         stages.pop(0)
+#
+#         if not dry_run:
+#             serialize(stages, tile.name, temp)
+#
+#         result = execute_stages_streaming(image_array, stages)
+#         delayed_tasks.append(result)
+#
+#     return delayed_tasks
 
 
 def serialize(stages, tile_name, temp):
