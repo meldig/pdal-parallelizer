@@ -1,10 +1,15 @@
+import contextlib
 import json
 import logging
 import os.path
 import sys
+from os.path import join
+
 import click
 import dask
 import numpy as np
+from distributed import progress
+
 import file_manager
 import do
 from cloud import Cloud
@@ -70,7 +75,6 @@ def process_pipelines(
         temp = config_file.get('temp')
         pipeline = config_file.get('pipeline')
 
-    tasks = []
     client = config_dask(n_workers, threads_per_worker, timeout)
 
     if input_type == "single":
@@ -83,69 +87,52 @@ def process_pipelines(
 
         print("Starting parallelization\n")
 
-        # for (array, stages, tile_name) in data:
-        #     if len(array) > 0:
-        #         big_future = client.scatter(array)
-        #         futures.append(client.submit(do.execute_stages_streaming, big_future, stages, tile_name, temp, dry_run))
-        #     else:
-        #         if not dry_run:
-        #             os.remove(temp + "/" + tile_name + ".pickle")
+        with performance_report(
+                filename="D:/data_dev/street_pointcloud_process/output/dask-report.html") if diagnostic else contextlib.nullcontext():
+            for (array, stages, tile_name) in data:
+                if len(array) > 0:
+                    big_future = client.scatter(array)
+                    futures.append(
+                        client.submit(do.execute_stages_streaming, big_future, stages, tile_name, temp, dry_run))
+                else:
+                    if not dry_run:
+                        os.remove(temp + "/" + tile_name + ".pickle")
 
-        if diagnostic:
-            with performance_report(filename="D:/data_dev/street_pointcloud_process/output/dask-report.html"):
-                for (array, stages, tile_name) in data:
-                    if len(array) > 0:
-                        big_future = client.scatter(array)
-                        futures.append(
-                            client.submit(do.execute_stages_streaming, big_future, stages, tile_name, temp, dry_run))
-                    else:
-                        if not dry_run:
-                            os.remove(temp + "/" + tile_name + ".pickle")
+            client.gather(futures)
 
-                client.gather(futures)
+        if merge_tiles:
+            c.merge(output, pipeline)
+
+        if remove_tiles:
+            for f in os.listdir(output):
+                if f != os.path.basename(c.filepath) and f.split(".")[1] != "html":
+                    os.remove(join(output, f))
+    else:
+        if len(os.listdir(temp)) != 0:
+            print("Something went wrong during previous execution, there is some temp files in your temp " +
+                  "directory.\nBeginning of the execution\n")
+            serialized_data = file_manager.get_serialized_data(temp)
+            tasks = do.process_serialized_stages(serialized_data, temp)
         else:
-            with performance_report(filename="D:/data_dev/street_pointcloud_process/output/dask-report.html"):
-                for (array, stages, tile_name) in data:
-                    if len(array) > 0:
-                        big_future = client.scatter(array)
-                        futures.append(
-                            client.submit(do.execute_stages_streaming, big_future, stages, tile_name, temp, dry_run))
-                    else:
-                        if not dry_run:
-                            os.remove(temp + "/" + tile_name + ".pickle")
+            print("Beginning of the execution.\n")
+            files = file_manager.get_files(input, dry_run)
+            tasks = do.process_several_clouds(files, pipeline, output, temp, buffer, remove_buffer, dry_run)
 
-                client.gather(futures)
+        print("Starting parallelization.\n")
 
-    # else:
-    #     if len(os.listdir(temp)) != 0:
-    #         print("Something went wrong during previous execution, there is some temp files in your temp " +
-    #               "directory.\nBeginning of the execution\n")
-    #         serialized_data = file_manager.get_serialized_data(temp)
-    #         tasks = do.process_serialized_stages(serialized_data, temp)
-    #     else:
-    #         print("Beginning of the execution.\n")
-    #         if input_type == "dir":
-    #             files = file_manager.get_files(input, dry_run)
-    #             tasks = do.process_several_clouds(files, pipeline, output, temp, buffer, remove_buffer, dry_run)
-    #
-    #     print("Starting parallelization.\n")
-    #
-    #     if diagnostic:
-    #         ms = MemorySampler()
-    #         with ms.sample(label="execution", client=client):
-    #             future = client.persist(tasks)
-    #             progress(future)
-    #         ms.plot()
-    #     else:
-    #         future = client.persist(tasks)
-    #         progress(future)
+        with performance_report(
+                filename="D:/data_dev/street_pointcloud_process/output/dask-report.html") if diagnostic else contextlib.nullcontext():
+            future = client.persist(tasks)
+            progress(future)
 
 
 if __name__ == '__main__':
     process_pipelines(
         config="D:\\data_dev\\pdal-parallelizer\\config.json",
         input_type="single",
-        tile_size=(20, 20),
+        tile_size=(35, 35),
+        merge_tiles=True,
+        remove_tiles=True,
         timeout=500,
         n_workers=6,
         diagnostic=True

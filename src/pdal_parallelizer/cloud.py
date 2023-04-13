@@ -1,5 +1,7 @@
+import os.path
 import subprocess
 import json
+from os import listdir
 
 import pdal
 
@@ -85,3 +87,37 @@ class Cloud:
         readers = stages.pop(0).pipeline()
         readers.execute()
         return readers.arrays[0]
+
+    def merge(self, output, pipeline):
+        wrapper = PipelineWrapper(pipeline)
+        outputs = ""
+        # Default values according to the pdal writers.las documentation
+        compression = 'none'
+        minor_version = 2
+        dataformat_id = 3
+
+        for f in listdir(output):
+            if f.split('.')[1] != "html":
+                outputs += '"' + output + '/' + f + '",'
+
+        if outputs != "":
+            extension = listdir(output)[0].split('.')[1]
+            if extension == 'laz':
+                writers_extension = 'las'
+                compression = 'laszip'
+            else:
+                writers_extension = extension
+
+            try:
+                minor_version = wrapper.get_writers()[0]['minor_version']
+                dataformat_id = wrapper.get_writers()[0]['dataformat_id']
+            except KeyError:
+                pass
+
+            filename = os.path.basename(self.filepath).split(".")[0]
+
+            merge = '[' + outputs + '{"type": "writers.' + writers_extension + '", "filename":"' + output + '/' + \
+                    filename + '.' + extension + '","extra_dims": "all", "compression": "' + compression + '", ' + \
+                    '"minor_version": ' + str(minor_version) + ', "dataformat_id": ' + str(dataformat_id) + '}]'
+
+            pdal.Pipeline(merge).execute()
