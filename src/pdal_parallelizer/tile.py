@@ -1,8 +1,7 @@
 from os import listdir
-
 import pdal
 import json
-from pipeline_wrapper import PipelineWrapper
+from .pipeline_wrapper import PipelineWrapper
 
 
 class Tile:

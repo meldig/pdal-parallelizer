@@ -2,8 +2,8 @@ import os
 import dask
 import pickle
 import numpy as np
-from cloud import Cloud
-from tile import Tile
+from .cloud import Cloud
+from .tile import Tile
 
 
 @dask.delayed
@@ -30,19 +30,6 @@ def execute_stages_streaming(array, stages, tile_name, temp, dry_run=None):
 
     if not dry_run:
         os.remove(temp + "/" + tile_name + ".pickle")
-
-    # filters = stages.pop(0).pipeline(array)
-    # iterator = filters.iterator()
-    # arrays = []
-    #
-    # for arr in iterator:
-    #     for stage in stages:
-    #         pipeline = stage.pipeline(arr)
-    #         pipeline.execute()
-    #         arr = pipeline.arrays[0]
-    #     arrays.append(arr)
-    #
-    # return arrays
 
 
 @dask.delayed
