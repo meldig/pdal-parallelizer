@@ -80,7 +80,13 @@ def process_pipelines(
     if input_type == "single":
         futures = []
         c = Cloud(input, bounding_box)
-        tiles = c.split(tile_size, pipeline, output, buffer, remove_buffer, dry_run)
+        if len(os.listdir(temp)) != 0:
+            print("Something went wrong during previous execution, there is some temp files in your temp " +
+                  "directory.\nBeginning of the execution\n")
+            tiles = file_manager.get_serialized_tiles(temp)
+        else:
+            tiles = c.split(tile_size, pipeline, output, buffer, remove_buffer, dry_run)
+
         print("Opening the cloud.\n")
         image_array = c.load_image_array(pipeline)
 
