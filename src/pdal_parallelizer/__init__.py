@@ -5,18 +5,13 @@ import os.path
 import sys
 from math import ceil
 from os.path import join
-
-import click
-import dask
 import numpy as np
 from distributed import progress
-
 import file_manager
 import do
 from cloud import Cloud
 from dask import config as cfg
 from dask.distributed import LocalCluster, Client, performance_report
-from distributed.diagnostics import MemorySampler
 
 
 def query_yes_no(question, default='no'):
