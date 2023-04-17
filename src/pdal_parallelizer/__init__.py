@@ -3,6 +3,7 @@ import json
 import logging
 import os.path
 import sys
+from math import ceil
 from os.path import join
 
 import click
@@ -53,6 +54,61 @@ def config_dask(n_workers, threads_per_worker, timeout):
     return client
 
 
+def trigger_warnings(n_workers, input_type, input, output, temp, tile_size):
+    if n_workers >= os.cpu_count():
+        answer = query_yes_no(
+            f'\nWARNING - You choose to launch {n_workers} workers but your machine has only {os.cpu_count()}'
+            f' CPUs, please reduce the number of workers.\nDo you want to continue ?'
+        )
+        if not answer:
+            return
+
+    if input_type == 'single':
+        c = Cloud(input)
+        if tile_size == (256, 256):
+            answer = query_yes_no(
+                f'WARNING - You are using the default value of the tile_size option (256 by 256 meters). Please '
+                f'check if your points cloud\'s dimensions are greater than this value.\nDo you want to continue ? '
+            )
+            if not answer:
+                return
+
+        infos = c.info
+        bounds = infos['summary']['bounds']
+        distX, distY = (
+            int(bounds['maxx'] - bounds['minx']),
+            int(bounds['maxy'] - bounds['miny'])
+        )
+
+        nTilesX = ceil(distX / tile_size[0])
+        nTilesY = ceil(distY / tile_size[0])
+
+        if nTilesX * nTilesY > n_workers:
+            answer = query_yes_no(
+                f'WARNING - With this size of tiles and this number of workers, each worker will have more than one task'
+                f' and it can blow up the distributed memory. Please choose a larger size for your tiles or increase '
+                f'your number of workers.\nDo you want to continue ?'
+            )
+            if not answer:
+                return
+
+    if input_type == 'dir':
+        if input == output or input == temp:
+            answer = query_yes_no(
+                f'WARNING - Your input folder is the same as your output or temp folder. This could be a problem. '
+                f'Please choose three separate directories.\n Do you want to continue ? '
+            )
+            if not answer:
+                return
+
+    if len(os.listdir(output)) > 0:
+        answer = query_yes_no(
+            f'WARNING - Your output directory is not empty.\n Do you want to continue ? '
+        )
+        if not answer:
+            return
+
+
 def process_pipelines(
         config,
         input_type,
@@ -74,6 +130,14 @@ def process_pipelines(
         output = config_file.get('output')
         temp = config_file.get('temp')
         pipeline = config_file.get('pipeline')
+
+    trigger_warnings(n_workers, input_type, input, output, temp, tile_size)
+
+    if not os.path.exists(temp):
+        os.mkdir(temp)
+
+    if not os.path.exists(output):
+        os.mkdir(output)
 
     client = config_dask(n_workers, threads_per_worker, timeout)
 
@@ -142,8 +206,7 @@ def process_pipelines(
 if __name__ == '__main__':
     process_pipelines(
         config="D:\\data_dev\\pdal-parallelizer\\config.json",
-        input_type="single",
-        tile_size=(35, 35),
+        input_type="dir",
         timeout=500,
         n_workers=6
     )
