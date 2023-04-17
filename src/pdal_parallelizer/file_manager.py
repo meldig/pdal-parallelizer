@@ -46,7 +46,7 @@ def get_files(input_directory, nFiles=None):
     return files
 
 
-def get_serialized_data(temp_directory):
+def get_serialized_tiles(temp_directory):
     """Returns the pipelines that have been serialized"""
     datas = []
     for tmp in listdir(temp_directory):

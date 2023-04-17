@@ -62,7 +62,7 @@ def process_pipelines(
         dry_run=None,
         diagnostic=None,
         tile_size=(256, 256),
-        buffer=0,
+        buffer=None,
         remove_buffer=None,
         bounding_box=None,
         merge_tiles=None,
@@ -118,8 +118,8 @@ def process_pipelines(
         if len(os.listdir(temp)) != 0:
             print("Something went wrong during previous execution, there is some temp files in your temp " +
                   "directory.\nBeginning of the execution\n")
-            serialized_data = file_manager.get_serialized_data(temp)
-            tasks = do.process_serialized_stages(serialized_data, temp)
+            serialized_data = file_manager.get_serialized_tiles(temp)
+            tasks = do.process_serialized_tiles(serialized_data, temp)
         else:
             print("Beginning of the execution.\n")
             files = file_manager.get_files(input, dry_run)
@@ -137,8 +137,7 @@ if __name__ == '__main__':
     process_pipelines(
         config="D:\\data_dev\\pdal-parallelizer\\config.json",
         input_type="single",
-        tile_size=(5, 5),
+        tile_size=(35, 35),
         timeout=500,
-        bounding_box=[-5, -10, 30, 40],
         n_workers=6
     )

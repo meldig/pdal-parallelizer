@@ -47,15 +47,17 @@ def execute_stages_streaming(array, stages, tile_name, temp, dry_run=None):
 
 @dask.delayed
 def write_cloud(array, writers, name=None, temp=None, dry_run=None):
+    print(array)
     writers.pipeline(array).execute_streaming()
     if not dry_run:
         os.remove(temp + '/' + name + ".pickle")
 
 
-def process_serialized_stages(serialized_data, temp):
+def process_serialized_tiles(serialized_data, temp):
     delayed_tasks = []
 
-    for (stages, temp_file) in serialized_data:
+    for (tiles, temp_file) in serialized_data:
+        stages = tiles.stages
         writers = stages.pop()
         array = execute_stages_standard(stages)
         result = write_cloud(array, writers, temp_file, temp)
@@ -74,7 +76,7 @@ def process_several_clouds(files, pipeline, output, temp, buffer=None, remove_bu
         p = t.link_pipeline(False)
 
         if not dry_run:
-            serialize(p.stages, t.name, temp)
+            serialize(t, temp)
 
         stages = p.stages
         writers = stages.pop()
@@ -99,7 +101,7 @@ def cut_image_array(tiles, image_array, temp, dry_run=None):
         stages = p.stages
 
         if not dry_run:
-            serialize(stages, tile.name, temp)
+            serialize(tile, temp)
 
         stages.pop(0)
         results.append((array, stages, tile.name))
@@ -107,8 +109,8 @@ def cut_image_array(tiles, image_array, temp, dry_run=None):
     return results
 
 
-def serialize(stages, tile_name, temp):
-    temp_file = temp + '/' + tile_name + ".pickle"
+def serialize(tile, temp):
+    temp_file = temp + '/' + tile.name + ".pickle"
     with open(temp_file, 'wb') as outfile:
         # Serialize the pipeline
-        pickle.dump((stages, tile_name), outfile)
+        pickle.dump(tile, outfile)
