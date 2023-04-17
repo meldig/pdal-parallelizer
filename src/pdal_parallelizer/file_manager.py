@@ -41,6 +41,8 @@ def get_files(input_directory, nFiles=None):
             sys.exit("The input attribute of your configuration file does not designate a directory. Maybe you are "
                      "trying to process a single file ? Check your -it option.")
 
+    print(files)
+
     return files
 
 

@@ -132,5 +132,5 @@ if __name__ == '__main__':
         input_type="dir",
         timeout=500,
         n_workers=6,
-        dry_run=3
+        dry_run=5
     )

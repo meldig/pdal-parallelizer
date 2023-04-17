@@ -46,9 +46,9 @@ def execute_stages_streaming(array, stages, tile_name, temp, dry_run=None):
 
 
 @dask.delayed
-def write_cloud(array, writers, name=None, temp=None):
+def write_cloud(array, writers, name=None, temp=None, dry_run=None):
     writers.pipeline(array).execute_streaming()
-    if temp:
+    if not dry_run:
         os.remove(temp + '/' + name + ".pickle")
 
 
@@ -73,14 +73,13 @@ def process_several_clouds(files, pipeline, output, temp, buffer=None, remove_bu
         t = Tile(c, c.bounds, pipeline, output, buffer, remove_buffer, os.path.basename(c.filepath).split(".")[0])
         p = t.link_pipeline(False)
 
-        stages = p.stages
-
         if not dry_run:
-            serialize(stages, t.name, temp)
+            serialize(p.stages, "aaa", temp)
 
+        stages = p.stages
         writers = stages.pop()
         array = execute_stages_standard(stages)
-        result = write_cloud(array, writers, t.name, temp)
+        result = write_cloud(array, writers, t.name, temp, dry_run)
         delayed_tasks.append(result)
 
     return delayed_tasks
