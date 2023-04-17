@@ -83,6 +83,13 @@ def process_pipelines(
         tiles = c.split(tile_size, pipeline, output, buffer, remove_buffer, dry_run)
         print("Opening the cloud.\n")
         image_array = c.load_image_array(pipeline)
+
+        if bounding_box:
+            image_array = image_array[np.where((image_array["X"] > bounding_box[0]) &
+                                               (image_array["X"] < bounding_box[2]) &
+                                               (image_array["Y"] > bounding_box[1]) &
+                                               (image_array["Y"] < bounding_box[3]))]
+
         data = do.cut_image_array(tiles, image_array, temp, dry_run)
 
         print("Starting parallelization\n")
@@ -130,8 +137,8 @@ if __name__ == '__main__':
     process_pipelines(
         config="D:\\data_dev\\pdal-parallelizer\\config.json",
         input_type="single",
-        tile_size=(35, 35),
+        tile_size=(5, 5),
         timeout=500,
-        buffer=10,
+        bounding_box=[-5, -10, 30, 40],
         n_workers=6
     )
