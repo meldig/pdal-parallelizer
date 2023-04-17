@@ -16,16 +16,16 @@ class Tile:
         self.remove_buffer = remove_buffer if remove_buffer else None
 
     def add_buffer(self):
-        self.bounds.min_x -= self.buffer[0]
-        self.bounds.min_y -= self.buffer[1]
-        self.bounds.max_x += self.buffer[0]
-        self.bounds.max_y += self.buffer[1]
+        self.bounds.min_x -= self.buffer
+        self.bounds.min_y -= self.buffer
+        self.bounds.max_x += self.buffer
+        self.bounds.max_y += self.buffer
 
     def remove_buffer(self):
-        self.bounds.min_x += self.buffer[0]
-        self.bounds.min_y += self.buffer[1]
-        self.bounds.max_x -= self.buffer[0]
-        self.bounds.max_y -= self.buffer[1]
+        self.bounds.min_x += self.buffer
+        self.bounds.min_y += self.buffer
+        self.bounds.max_x -= self.buffer
+        self.bounds.max_y -= self.buffer
 
     def link_pipeline(self, is_single_file) -> pdal.Pipeline:
         writers = self.pipeline_wrapper.get_writers()
@@ -40,10 +40,10 @@ class Tile:
         if is_single_file:
             if self.buffer:
                 self.add_buffer()
+                # self.pipeline_wrapper.add_crop_filter(self.bounds)
+
                 if self.remove_buffer:
                     self.remove_buffer()
-
-            self.pipeline_wrapper.add_crop_filter(self.bounds)
 
         if not self.cloud.has_ClassFlags_dimension():
             self.pipeline_wrapper.add_ClassFlags()

@@ -62,7 +62,7 @@ def process_pipelines(
         dry_run=None,
         diagnostic=None,
         tile_size=(256, 256),
-        buffer=None,
+        buffer=0,
         remove_buffer=None,
         bounding_box=None,
         merge_tiles=None,
@@ -80,7 +80,7 @@ def process_pipelines(
     if input_type == "single":
         futures = []
         c = Cloud(input, bounding_box)
-        tiles = c.split(tile_size, pipeline, output, dry_run)
+        tiles = c.split(tile_size, pipeline, output, buffer, remove_buffer, dry_run)
         print("Opening the cloud.\n")
         image_array = c.load_image_array(pipeline)
         data = do.cut_image_array(tiles, image_array, temp, dry_run)
@@ -129,8 +129,9 @@ def process_pipelines(
 if __name__ == '__main__':
     process_pipelines(
         config="D:\\data_dev\\pdal-parallelizer\\config.json",
-        input_type="dir",
+        input_type="single",
+        tile_size=(35, 35),
         timeout=500,
-        n_workers=6,
-        dry_run=5
+        buffer=10,
+        n_workers=6
     )

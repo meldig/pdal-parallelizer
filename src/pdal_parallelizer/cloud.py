@@ -40,7 +40,7 @@ class Cloud:
         dimensions = self.info["summary"]["dimensions"]
         return "ClassFlags" in dimensions
 
-    def split(self, tile_size, pipeline, output, n_tiles=None) -> list:
+    def split(self, tile_size, pipeline, output, buffer=None, remove_buffer=None, n_tiles=None) -> list:
         current_min_x = self.bounds.min_x
         current_min_y = self.bounds.min_y
         current_max_x = current_min_x + tile_size[0] if \
@@ -56,7 +56,7 @@ class Cloud:
         while current_max_x <= self.bounds.max_x and current_max_y <= self.bounds.max_y and (tiles_created <= n_tiles if n_tiles else True):
             tile_bounds = Bounds(current_min_x, current_min_y, current_max_x, current_max_y)
             name = str(int(tile_bounds.min_x)) + "_" + str(int(tile_bounds.min_y))
-            t = Tile(self, tile_bounds, pipeline, output, name=name)
+            t = Tile(self, tile_bounds, pipeline, output, buffer, remove_buffer, name)
 
             current_min_x += tile_size[0]
             current_max_x += tile_size[0]

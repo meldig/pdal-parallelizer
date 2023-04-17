@@ -74,7 +74,7 @@ def process_several_clouds(files, pipeline, output, temp, buffer=None, remove_bu
         p = t.link_pipeline(False)
 
         if not dry_run:
-            serialize(p.stages, "aaa", temp)
+            serialize(p.stages, t.name, temp)
 
         stages = p.stages
         writers = stages.pop()
@@ -89,15 +89,17 @@ def cut_image_array(tiles, image_array, temp, dry_run=None):
     results = []
 
     for tile in tiles:
+        p = tile.link_pipeline(True)
+
         array = image_array[np.where((image_array["X"] > tile.bounds.min_x) &
                                      (image_array["X"] < tile.bounds.max_x) &
                                      (image_array["Y"] > tile.bounds.min_y) &
                                      (image_array["Y"] < tile.bounds.max_y))]
 
-        stages = tile.link_pipeline(True).stages
+        stages = p.stages
 
         if not dry_run:
-            serialize(tile, tile.name, temp)
+            serialize(stages, tile.name, temp)
 
         stages.pop(0)
         results.append((array, stages, tile.name))
