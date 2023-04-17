@@ -55,32 +55,3 @@ def get_serialized_tiles(temp_directory):
             datas.append(data)
 
     return datas
-
-
-def get_lightweight_files(output_directory):
-    # Get the output directory files size in bytes
-    weights_bytes = [os.path.getsize(join(output_directory, f)) for f in listdir(output_directory)]
-    # Convert it in ko
-    weights_ko = [round(b / 1024, 2) for b in weights_bytes]
-    # Calculate the deciles
-    if len(weights_ko) >= 2:
-        deciles = [round(q, 2) for q in statistics.quantiles(weights_ko, n=10)]
-        # And retrieve files whose weight is in the first decile
-        weight_files = [join(output_directory, f) for f in listdir(output_directory) if round(os.path.getsize(join(output_directory, f)) / 1024, 2) <= deciles[0]]
-        remove_empty_files(weight_files)
-    else:
-        pass
-        #removeEmptyFiles([join(output_directory, f) for f in listdir(output_directory)])
-
-
-def remove_empty_files(files):
-    # For each file
-    for f in files:
-        # Run pdal info
-        pdal_info = subprocess.run(['pdal', 'info', f, "--dimensions", "X"],
-                                   stderr=subprocess.PIPE,
-                                   stdout=subprocess.PIPE)
-        info = json.loads(pdal_info.stdout.decode())
-        # Get the number of points
-        if info['stats']['statistic'][0]['count'] == 0:
-            os.remove(f)
