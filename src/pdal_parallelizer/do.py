@@ -85,23 +85,6 @@ def process_several_clouds(files, pipeline, output, temp, buffer=None, remove_bu
 
     return delayed_tasks
 
-# def process_single_cloud(tiles, image_array, temp, dry_run=None):
-#     delayed_tasks = []
-#
-#     for tile in tiles:
-#         p = tile.link_pipeline(True)
-#
-#         stages = p.stages
-#         stages.pop(0)
-#
-#         if not dry_run:
-#             serialize(stages, tile.name, temp)
-#
-#         result = execute_stages_streaming(image_array, stages)
-#         delayed_tasks.append(result)
-#
-#     return delayed_tasks
-
 
 def cut_image_array(tiles, image_array, temp, dry_run=None):
     results = []
@@ -115,7 +98,7 @@ def cut_image_array(tiles, image_array, temp, dry_run=None):
         stages = tile.link_pipeline(True).stages
 
         if not dry_run:
-            serialize(stages, tile.name, temp)
+            serialize(tile, tile.name, temp)
 
         stages.pop(0)
         results.append((array, stages, tile.name))

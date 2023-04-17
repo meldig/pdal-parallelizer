@@ -129,11 +129,8 @@ def process_pipelines(
 if __name__ == '__main__':
     process_pipelines(
         config="D:\\data_dev\\pdal-parallelizer\\config.json",
-        input_type="single",
-        tile_size=(35, 35),
-        merge_tiles=True,
-        remove_tiles=True,
+        input_type="dir",
         timeout=500,
         n_workers=6,
-        diagnostic=True
+        dry_run=3
     )
