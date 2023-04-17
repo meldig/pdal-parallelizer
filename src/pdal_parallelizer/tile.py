@@ -45,6 +45,9 @@ class Tile:
 
             self.pipeline_wrapper.add_crop_filter(self.bounds)
 
+        if not self.cloud.has_ClassFlags_dimension():
+            self.pipeline_wrapper.add_ClassFlags()
+
         self.pipeline_wrapper.set_readers_filename(self.cloud.filepath)
         self.pipeline_wrapper.set_writers_filename(self.output + "/" + self.name + extension)
 

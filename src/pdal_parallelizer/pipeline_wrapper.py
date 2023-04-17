@@ -29,3 +29,8 @@ class PipelineWrapper:
         crop_filter_parsed = json.loads(crop_filter)
         crop_filter_parsed["bounds"] = f"([{bounds.min_x}, {bounds.max_x}], [{bounds.min_y}, {bounds.max_y}])"
         self.loaded_pipeline.insert(1, crop_filter_parsed)
+
+    def add_ClassFlags(self):
+        ferry_filter = '{"type": "filters.ferry", "dimensions": "=>ClassFlags"}'
+        ferry_filter_parsed = json.loads(ferry_filter)
+        self.loaded_pipeline.insert(1, ferry_filter_parsed)
