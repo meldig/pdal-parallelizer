@@ -1,56 +1,15 @@
-"""
-Bounds class.
-
-A bound is composed of :
-- Its minimal x-value (minx)
-- Its minimal y-value (miny)
-- Its maximal x-value (maxx)
-- Its maximal y-value (maxy)
-- A srs (optional)
-"""
-
-import json
-
-
-def removeBuffer(bounds):
-    crop = '{"type": "filters.crop"}'
-    parsed = json.loads(crop)
-    parsed['bounds'] = str(bounds)
-    return parsed
-
-
 class Bounds:
-    def __init__(self, minx, miny, maxx, maxy, srs=None):
-        self.minx = minx
-        self.miny = miny
-        self.maxx = maxx
-        self.maxy = maxy
-        self.srs = srs
-        self.distX = self.maxx - self.minx
-        self.distY = self.maxy - self.miny
+    def __init__(self, min_x, min_y, max_x, max_y):
+        self.min_x = min_x
+        self.min_y = min_y
+        self.max_x = max_x
+        self.max_y = max_y
 
-    def getDistX(self):
-        return self.distX
+    def get_dist_x(self) -> float:
+        return self.max_x - self.min_x
 
-    def getDistY(self):
-        return self.distY
-
-    def buffer(self, buffer):
-        if buffer < 0:
-            minx = self.minx + buffer
-            miny = self.miny + buffer
-            maxx = self.maxx - buffer
-            maxy = self.maxy - buffer
-        else:
-            minx = self.minx - buffer
-            miny = self.miny - buffer
-            maxx = self.maxx + buffer
-            maxy = self.maxy + buffer
-
-        assign = '{"type": "filters.assign"}'
-        parsed = json.loads(assign)
-        parsed['value'] = f'ClassFlags = 2 WHERE X > {self.maxx} || X < {self.minx} || Y > {self.maxy} || Y < {self.miny}'
-        return self, Bounds(minx, miny, maxx, maxy, self.srs), parsed
+    def get_dist_y(self) -> float:
+        return self.max_y - self.min_y
 
     def __str__(self):
-        return f"([{self.minx:.2f},{self.maxx:.2f}],[{self.miny:.2f},{self.maxy:.2f}])"
+        return f"([{self.min_x:.2f},{self.max_x:.2f}],[{self.min_y:.2f},{self.max_y:.2f}])"

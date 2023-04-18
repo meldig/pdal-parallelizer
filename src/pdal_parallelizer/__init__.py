@@ -1,22 +1,16 @@
 import json
 import logging
-import os
 import os.path
-import click
-import pdal
+import sys
+from os.path import join
+import numpy as np
+import matplotlib.pyplot as plt
+from . import file_manager
+from . import do
+from .cloud import Cloud
 from dask import config as cfg
 from dask.distributed import LocalCluster, Client, progress
 from distributed.diagnostics import MemorySampler
-from os import listdir
-from . import do
-from . import file_manager
-from . import cloud
-from . import tile
-from matplotlib import pyplot as plt
-import sys
-import ntpath
-from os.path import join
-from math import ceil
 
 
 def query_yes_no(question, default='no'):
@@ -42,62 +36,19 @@ def query_yes_no(question, default='no'):
 
 
 def config_dask(n_workers, threads_per_worker, timeout):
-    """Make some configuration to avoid workers errors due to heartbeat or timeout problems. Set the number of cores
-    to process the pipelines """
     if not timeout:
         timeout = input('After how long of inactivity do you want to kill your worker (timeout)\n')
 
     cfg.set({'interface': 'lo'})
     cfg.set({'distributed.scheduler.worker-ttl': None})
     cfg.set({'distributed.comm.timeouts.connect': timeout})
-    cluster = LocalCluster(n_workers=n_workers, threads_per_worker=threads_per_worker, silence_logs=logging.ERROR)
+    cluster = LocalCluster(n_workers=n_workers, threads_per_worker=threads_per_worker, memory_limit=None,
+                           silence_logs=logging.ERROR)
     client = Client(cluster)
     return client
 
 
-def process_pipelines(
-        config,
-        input_type,
-        timeout=None,
-        n_workers=3,
-        threads_per_worker=1,
-        dry_run=None,
-        diagnostic=False,
-        tile_size=(256, 256),
-        buffer=None,
-        remove_buffer=None,
-        bounding_box=None,
-        merge_tiles=False,
-        remove_tiles=False
-):
-    # Assertions
-    assert type(config) is str
-    assert input_type == "single" or input_type == "dir"
-    if timeout:
-        assert type(timeout) is int
-    assert type(n_workers) is int
-    assert type(threads_per_worker) is int
-    if dry_run:
-        assert type(dry_run) is int
-    assert type(diagnostic) is bool
-    assert type(tile_size) is tuple and len(tile_size) == 2
-    if buffer:
-        assert type(buffer) is int
-    if remove_buffer:
-        assert type(remove_buffer) is bool
-    if bounding_box:
-        assert type(bounding_box) is tuple
-        assert len(bounding_box) == 4
-    assert type(merge_tiles) is bool
-    assert type(remove_tiles) is bool
-
-    with open(config, 'r') as c:
-        config_file = json.load(c)
-        input_dir = config_file.get('input')
-        output = config_file.get('output')
-        temp = config_file.get('temp')
-        pipeline = config_file.get('pipeline')
-
+def trigger_warnings(n_workers, input_type, input, output, temp, tile_size):
     if n_workers >= os.cpu_count():
         answer = query_yes_no(
             f'\nWARNING - You choose to launch {n_workers} workers but your machine has only {os.cpu_count()}'
@@ -107,6 +58,7 @@ def process_pipelines(
             return
 
     if input_type == 'single':
+        c = Cloud(input)
         if tile_size == (256, 256):
             answer = query_yes_no(
                 f'WARNING - You are using the default value of the tile_size option (256 by 256 meters). Please '
@@ -115,24 +67,46 @@ def process_pipelines(
             if not answer:
                 return
 
-        infos = cloud.compute_quickinfo(input_dir)
-        bounds = infos['summary']['bounds']
-        distX, distY = (
-            int(bounds['maxx'] - bounds['minx']),
-            int(bounds['maxy'] - bounds['miny'])
-        )
-
-        nTilesX = ceil(distX / tile_size[0])
-        nTilesY = ceil(distY / tile_size[0])
-
-        if nTilesX * nTilesY > n_workers:
+    if input_type == 'dir':
+        if input == output or input == temp:
             answer = query_yes_no(
-                f'WARNING - With this size of tiles and this number of workers, each worker will have more than one task'
-                f' and it can blow up the distributed memory. Please choose a larger size for your tiles or increase '
-                f'your number of workers.\nDo you want to continue ?'
+                f'WARNING - Your input folder is the same as your output or temp folder. This could be a problem. '
+                f'Please choose three separate directories.\n Do you want to continue ? '
             )
             if not answer:
                 return
+
+    if len(os.listdir(output)) > 0:
+        answer = query_yes_no(
+            f'WARNING - Your output directory is not empty.\n Do you want to continue ? '
+        )
+        if not answer:
+            return
+
+
+def process_pipelines(
+        config,
+        input_type,
+        timeout=None,
+        n_workers=3,
+        threads_per_worker=1,
+        dry_run=None,
+        diagnostic=None,
+        tile_size=(256, 256),
+        buffer=None,
+        remove_buffer=None,
+        bounding_box=None,
+        merge_tiles=None,
+        remove_tiles=None
+):
+    with open(config, 'r') as c:
+        config_file = json.load(c)
+        input = config_file.get('input')
+        output = config_file.get('output')
+        temp = config_file.get('temp')
+        pipeline = config_file.get('pipeline')
+
+    trigger_warnings(n_workers, input_type, input, output, temp, tile_size)
 
     if not os.path.exists(temp):
         os.mkdir(temp)
@@ -140,76 +114,68 @@ def process_pipelines(
     if not os.path.exists(output):
         os.mkdir(output)
 
-    # If there is some temp file in the temp directory, these are processed
-    if len(listdir(temp)) != 0:
-        click.echo(
-            f'Something went wrong during previous execution, there is some temp files in your temp '
-            f'directory.\nBeginning of the execution\n')
-        # Get all the deserialized pipelines
-        pipeline_iterator = file_manager.getSerializedPipelines(temp_directory=temp)
-        # Process pipelines
-        delayed = do.process_serialized_pipelines(temp_dir=temp, iterator=pipeline_iterator)
-    else:
-        click.echo('Beginning of the execution\n')
-        # If the user don't specify the dry_run option
-        if not dry_run:
-            # If the user wants to process a single file, it is split. Else, get all the files of the input directory
-            iterator = do.splitCloud(filepath=input_dir,
-                                     output_dir=output,
-                                     json_pipeline=pipeline,
-                                     tile_bounds=tile_size,
-                                     buffer=buffer,
-                                     remove_buffer=remove_buffer,
-                                     bounding_box=bounding_box) if input_type == 'single' \
-                else file_manager.getFiles(input_directory=input_dir)
-            # Process pipelines
-            delayed = do.process_pipelines(output_dir=output, json_pipeline=pipeline, temp_dir=temp, iterator=iterator,
-                                           is_single=(input_type == 'single'))
+    client = config_dask(n_workers, threads_per_worker, timeout)
+    ms = MemorySampler()
+
+    if input_type == "single":
+        futures = []
+        c = Cloud(input, bounding_box)
+        if len(os.listdir(temp)) != 0:
+            print("Something went wrong during previous execution, there is some temp files in your temp " +
+                  "directory.\nBeginning of the execution\n")
+            tiles = file_manager.get_serialized_tiles(temp)
         else:
-            # If the user wants to process a single file, it is split and get the number of tiles given by the user.
-            # Else, get the number of files we want to do the test execution (not serialized)
-            iterator = do.splitCloud(filepath=input_dir,
-                                     output_dir=output,
-                                     json_pipeline=pipeline,
-                                     tile_bounds=tile_size,
-                                     nTiles=dry_run,
-                                     buffer=buffer,
-                                     remove_buffer=remove_buffer,
-                                     bounding_box=bounding_box) if input_type == 'single' \
-                else file_manager.getFiles(input_directory=input_dir, nFiles=dry_run)
-            # Process pipelines
-            delayed = do.process_pipelines(output_dir=output, json_pipeline=pipeline, iterator=iterator,
-                                           dry_run=dry_run, is_single=(input_type == 'single'))
+            tiles = c.split(tile_size, pipeline, output, buffer, dry_run)
 
-    client = config_dask(n_workers=n_workers, threads_per_worker=threads_per_worker, timeout=timeout)
+        print("Opening the cloud.\n")
+        image_array = c.load_image_array(pipeline)
 
-    click.echo('Parallelization started.\n')
+        if bounding_box:
+            image_array = image_array[np.where((image_array["X"] > bounding_box[0]) &
+                                               (image_array["X"] < bounding_box[2]) &
+                                               (image_array["Y"] > bounding_box[1]) &
+                                               (image_array["Y"] < bounding_box[3]))]
 
-    if diagnostic:
-        ms = MemorySampler()
-        with ms.sample(label='execution', client=client):
-            delayed = client.compute(delayed)
-            progress(delayed)
-        ms.plot()
-    else:
-        delayed = client.compute(delayed)
-        progress(delayed)
+        data = do.cut_image_array(tiles, image_array, temp, dry_run)
 
-    del delayed
+        print(f"Starting parallelization, visit the dashboard ({client.dashboard_link}) to follow the execution.\n")
 
-    file_manager.getEmptyWeight(output_directory=output)
+        with ms.sample("Execution"):
+            for (array, stages, tile) in data:
+                if len(array) > 0:
+                    big_future = client.scatter(array)
+                    futures.append(
+                        client.submit(do.execute_stages_streaming, big_future, stages, tile, temp, remove_buffer, dry_run))
+                else:
+                    if not dry_run:
+                        os.remove(temp + "/" + tile.name + ".pickle")
 
-    if merge_tiles and len(listdir(output)) > 1:
-        input_filename = ntpath.basename(input_dir).split('.')[0]
-        writers = tile.get_writers(tile.load_pipeline(pipeline))
-        merge = cloud.merge(output, input_filename, writers)
-        if merge is not None:
-            merge_ppln = pdal.Pipeline(merge)
-            merge_ppln.execute()
+            client.gather(futures)
+
+        if merge_tiles:
+            c.merge(output, pipeline)
 
         if remove_tiles:
             for f in os.listdir(output):
-                if f.split('.')[0] != input_filename:
+                if f != os.path.basename(c.filepath) and f.split(".")[1] != "png":
                     os.remove(join(output, f))
+    else:
+        if len(os.listdir(temp)) != 0:
+            print("Something went wrong during previous execution, there is some temp files in your temp " +
+                  "directory.\nBeginning of the execution\n")
+            serialized_data = file_manager.get_serialized_tiles(temp)
+            tasks = do.process_serialized_tiles(serialized_data, temp)
+        else:
+            print("Beginning of the execution.\n")
+            files = file_manager.get_files(input, dry_run)
+            tasks = do.process_several_clouds(files, pipeline, output, temp, buffer, dry_run)
 
-    plt.savefig(output + '/memory-usage.png') if diagnostic else None
+        print("Starting parallelization.\n")
+
+        with ms.sample("Execution"):
+            future = client.persist(tasks)
+            progress(future)
+
+    if diagnostic:
+        ms.plot()
+        plt.savefig(output + "/diagnostic.png")

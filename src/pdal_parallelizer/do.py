@@ -1,89 +1,114 @@
-"""
-Do file.
-
-Responsible for all the executions, serializations or creations of object we need to process the pipelines.
-"""
-
-import dask
-from dask.distributed import Lock
-from . import tile
-from . import cloud
-from . import bounds
-import pickle
 import os
+import dask
+import pickle
+import numpy as np
+from .cloud import Cloud
+from .tile import Tile
 
 
 @dask.delayed
-def process(pipeline, temp_dir=None):
-    """Process pipeline and delete the associate temp file if it's not a dry run"""
-    if temp_dir:
-        with Lock(str(pipeline[1])):
-            # Get the temp file associated with the pipeline
-            temp_file = temp_dir + '/' + str(pipeline[1]) + '.pickle'
-        # Execute the pipeline
-        pipeline[0].execute()
-        try:
-            # Remove the temp file
-            os.remove(temp_file)
-        except FileNotFoundError:
-            pass
-    # Don't need to get and suppress the temp file if it's a dry run
-    else:
-        pipeline[0].execute()
+def execute_stages_standard(stages):
+    readers_stage = stages.pop(0)
+    readers = readers_stage.pipeline()
+    readers.execute()
+    arr = readers.arrays[0]
+
+    for stage in stages:
+        pipeline = stage.pipeline(arr)
+        pipeline.execute()
+        if len(pipeline.arrays[0]) > 0:
+            arr = pipeline.arrays[0]
+
+    return arr
 
 
-def process_serialized_pipelines(temp_dir, iterator):
-    """Create the array of delayed tasks for pipelines in the temp directory (if there is some)"""
-    delayedPipelines = []
-    # yield loop syntax
-    while True:
-        try:
-            p = next(iterator)
-        except StopIteration:
-            break
+def execute_stages_streaming(array, stages, tile, temp, remove_buffer=None, dry_run=None):
+    writers = stages.pop()
 
-        # Add the delayed task to the array
-        delayedPipelines.append(dask.delayed(process)(p, temp_dir))
+    for stage in stages:
+        pipeline = stage.pipeline(array)
+        pipeline.execute()
+        array = pipeline.arrays[0]
 
-    return delayedPipelines
+    if remove_buffer:
+        tile.remove_buffer()
+        array = array[np.where((array["X"] > tile.bounds.min_x) &
+                               (array["X"] < tile.bounds.max_x) &
+                               (array["Y"] > tile.bounds.min_y) &
+                               (array["Y"] < tile.bounds.max_y))]
 
+    pipeline = writers.pipeline(array)
+    pipeline.execute_streaming()
 
-def process_pipelines(output_dir, json_pipeline, iterator, temp_dir=None, dry_run=False, is_single=False):
-    delayedPipelines = []
-    while True:
-        try:
-            # If it's a cloud, 'next(iterator)' is a tile. Else, 'next(iterator)' is a filepath so a tile must be
-            # created
-            t = next(iterator) if is_single else tile.Tile(next(iterator), output_dir, json_pipeline)
-            p = t.pipeline(is_single)
-            # If it's not a dry run, the pipeline must be serialized
-            if not dry_run:
-                serializePipeline(p, temp_dir)
-                delayedPipelines.append(dask.delayed(process)(p, temp_dir))
-            # If it's a dry run, the pipeline is not serialized
-            else:
-                delayedPipelines.append(dask.delayed(process)(p))
-        except StopIteration:
-            break
-
-    return delayedPipelines
+    if not dry_run:
+        os.remove(temp + "/" + tile.name + ".pickle")
 
 
-def splitCloud(filepath, output_dir, json_pipeline, tile_bounds, nTiles=None, buffer=None, remove_buffer=False, bounding_box=None):
-    """Split the cloud in many tiles"""
-    bds = bounds.Bounds(bounding_box[0], bounding_box[1], bounding_box[2], bounding_box[3]) if bounding_box else None
-    # Create a cloud object
-    c = cloud.Cloud(filepath, bounds=bds)
-    # Create a tile the size of the cloud
-    t = tile.Tile(filepath=c.filepath, output_dir=output_dir, json_pipeline=json_pipeline, bounds=c.bounds, buffer=buffer, remove_buffer=remove_buffer, cloud_object=c)
-    # Split the tile in small parts of given sizes
-    return t.split(tile_bounds[0], tile_bounds[1], nTiles)
+@dask.delayed
+def write_cloud(array, writers, name=None, temp=None, dry_run=None):
+    writers.pipeline(array).execute_streaming()
+    if not dry_run:
+        os.remove(temp + '/' + name + ".pickle")
 
 
-def serializePipeline(pipeline, temp_dir):
-    """Serialize the pipelines"""
-    # Create the temp file path
-    temp_file = temp_dir + '/' + str(pipeline[1]) + '.pickle'
+def process_serialized_tiles(serialized_data, temp):
+    delayed_tasks = []
+
+    for tile in serialized_data:
+        stages = tile.stages
+        writers = stages.pop()
+        array = execute_stages_standard(stages)
+        result = write_cloud(array, writers, tile.name, temp, None)
+
+        delayed_tasks.append(result)
+
+    return delayed_tasks
+
+
+def process_several_clouds(files, pipeline, output, temp, buffer=None, dry_run=None):
+    delayed_tasks = []
+
+    for file in files:
+        c = Cloud(file)
+        t = Tile(c, c.bounds, pipeline, output, buffer, os.path.basename(c.filepath).split(".")[0])
+        p = t.link_pipeline(False)
+
+        if not dry_run:
+            serialize(t, temp)
+
+        stages = p.stages
+        writers = stages.pop()
+        array = execute_stages_standard(stages)
+        result = write_cloud(array, writers, t.name, temp, dry_run)
+        delayed_tasks.append(result)
+
+    return delayed_tasks
+
+
+def cut_image_array(tiles, image_array, temp, dry_run=None):
+    results = []
+
+    for tile in tiles:
+        p = tile.link_pipeline(True)
+
+        array = image_array[np.where((image_array["X"] > tile.bounds.min_x) &
+                                     (image_array["X"] < tile.bounds.max_x) &
+                                     (image_array["Y"] > tile.bounds.min_y) &
+                                     (image_array["Y"] < tile.bounds.max_y))]
+
+        stages = p.stages
+
+        if not dry_run:
+            serialize(tile, temp)
+
+        stages.pop(0)
+        results.append((array, stages, tile))
+
+    return results
+
+
+def serialize(tile, temp):
+    temp_file = temp + '/' + tile.name + ".pickle"
     with open(temp_file, 'wb') as outfile:
         # Serialize the pipeline
-        pickle.dump(pipeline, outfile)
+        pickle.dump(tile, outfile)
