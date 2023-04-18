@@ -3,9 +3,9 @@ import subprocess
 import json
 from os import listdir
 import pdal
-from bounds import Bounds
-from tile import Tile
-from pipeline_wrapper import PipelineWrapper
+from .bounds import Bounds
+from .tile import Tile
+from .pipeline_wrapper import PipelineWrapper
 
 
 class Cloud:

@@ -2,8 +2,8 @@ import os
 import dask
 import pickle
 import numpy as np
-from cloud import Cloud
-from tile import Tile
+from .cloud import Cloud
+from .tile import Tile
 
 
 @dask.delayed

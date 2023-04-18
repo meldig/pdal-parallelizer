@@ -5,9 +5,9 @@ import sys
 from os.path import join
 import numpy as np
 import matplotlib.pyplot as plt
-import file_manager
-import do
-from cloud import Cloud
+from . import file_manager
+from . import do
+from .cloud import Cloud
 from dask import config as cfg
 from dask.distributed import LocalCluster, Client, progress
 from distributed.diagnostics import MemorySampler
@@ -179,16 +179,3 @@ def process_pipelines(
     if diagnostic:
         ms.plot()
         plt.savefig(output + "/diagnostic.png")
-
-
-if __name__ == '__main__':
-    process_pipelines(
-        config="D:\\data_dev\\pdal-parallelizer\\config.json",
-        input_type="single",
-        tile_size=(35, 35),
-        timeout=500,
-        n_workers=6,
-        buffer=2,
-        remove_buffer=True,
-        diagnostic=True
-    )
