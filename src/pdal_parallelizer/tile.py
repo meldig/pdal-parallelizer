@@ -1,18 +1,17 @@
 from os import listdir
 import pdal
 import json
-from .pipeline_wrapper import PipelineWrapper
+from pipeline_wrapper import PipelineWrapper
 
 
 class Tile:
-    def __init__(self, cloud, bounds, pipeline, output, buffer=None, remove_buffer=None, name=None):
+    def __init__(self, cloud, bounds, pipeline, output, buffer=None, name=None):
         self.cloud = cloud
         self.bounds = bounds
         self.name = name if name else str(int(self.bounds.min_x)) + '_' + str(int(self.bounds.min_y))
         self.pipeline = pipeline
         self.output = output
         self.buffer = buffer if buffer else None
-        self.remove_buffer = remove_buffer if remove_buffer else None
         self.stages = None
 
     def add_buffer(self):
@@ -41,10 +40,6 @@ class Tile:
         if is_single_file:
             if self.buffer:
                 self.add_buffer()
-                # self.pipeline_wrapper.add_crop_filter(self.bounds)
-
-                if self.remove_buffer:
-                    self.remove_buffer()
 
         if not self.cloud.has_ClassFlags_dimension():
             pipeline_wrapper.add_ClassFlags()

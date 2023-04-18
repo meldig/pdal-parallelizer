@@ -5,12 +5,11 @@ import sys
 from os.path import join
 import numpy as np
 import matplotlib.pyplot as plt
-from distributed import progress
-from . import file_manager
-from . import do
-from .cloud import Cloud
+import file_manager
+import do
+from cloud import Cloud
 from dask import config as cfg
-from dask.distributed import LocalCluster, Client
+from dask.distributed import LocalCluster, Client, progress
 from distributed.diagnostics import MemorySampler
 
 
@@ -126,7 +125,7 @@ def process_pipelines(
                   "directory.\nBeginning of the execution\n")
             tiles = file_manager.get_serialized_tiles(temp)
         else:
-            tiles = c.split(tile_size, pipeline, output, buffer, remove_buffer, dry_run)
+            tiles = c.split(tile_size, pipeline, output, buffer, dry_run)
 
         print("Opening the cloud.\n")
         image_array = c.load_image_array(pipeline)
@@ -139,17 +138,17 @@ def process_pipelines(
 
         data = do.cut_image_array(tiles, image_array, temp, dry_run)
 
-        print("Starting parallelization\n")
+        print(f"Starting parallelization, visit the dashboard ({client.dashboard_link}) to follow the execution.\n")
 
         with ms.sample("Execution"):
-            for (array, stages, tile_name) in data:
+            for (array, stages, tile) in data:
                 if len(array) > 0:
                     big_future = client.scatter(array)
                     futures.append(
-                        client.submit(do.execute_stages_streaming, big_future, stages, tile_name, temp, dry_run))
+                        client.submit(do.execute_stages_streaming, big_future, stages, tile, temp, remove_buffer, dry_run))
                 else:
                     if not dry_run:
-                        os.remove(temp + "/" + tile_name + ".pickle")
+                        os.remove(temp + "/" + tile.name + ".pickle")
 
             client.gather(futures)
 
@@ -158,7 +157,7 @@ def process_pipelines(
 
         if remove_tiles:
             for f in os.listdir(output):
-                if f != os.path.basename(c.filepath) and f.split(".")[1] != "html":
+                if f != os.path.basename(c.filepath) and f.split(".")[1] != "png":
                     os.remove(join(output, f))
     else:
         if len(os.listdir(temp)) != 0:
@@ -169,7 +168,7 @@ def process_pipelines(
         else:
             print("Beginning of the execution.\n")
             files = file_manager.get_files(input, dry_run)
-            tasks = do.process_several_clouds(files, pipeline, output, temp, buffer, remove_buffer, dry_run)
+            tasks = do.process_several_clouds(files, pipeline, output, temp, buffer, dry_run)
 
         print("Starting parallelization.\n")
 
@@ -189,5 +188,7 @@ if __name__ == '__main__':
         tile_size=(35, 35),
         timeout=500,
         n_workers=6,
+        buffer=2,
+        remove_buffer=True,
         diagnostic=True
     )

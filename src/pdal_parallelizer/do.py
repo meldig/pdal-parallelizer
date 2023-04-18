@@ -2,8 +2,8 @@ import os
 import dask
 import pickle
 import numpy as np
-from .cloud import Cloud
-from .tile import Tile
+from cloud import Cloud
+from tile import Tile
 
 
 @dask.delayed
@@ -22,14 +22,26 @@ def execute_stages_standard(stages):
     return arr
 
 
-def execute_stages_streaming(array, stages, tile_name, temp, dry_run=None):
+def execute_stages_streaming(array, stages, tile, temp, remove_buffer=None, dry_run=None):
+    writers = stages.pop()
+
     for stage in stages:
         pipeline = stage.pipeline(array)
         pipeline.execute()
         array = pipeline.arrays[0]
 
+    if remove_buffer:
+        tile.remove_buffer()
+        array = array[np.where((array["X"] > tile.bounds.min_x) &
+                               (array["X"] < tile.bounds.max_x) &
+                               (array["Y"] > tile.bounds.min_y) &
+                               (array["Y"] < tile.bounds.max_y))]
+
+    pipeline = writers.pipeline(array)
+    pipeline.execute_streaming()
+
     if not dry_run:
-        os.remove(temp + "/" + tile_name + ".pickle")
+        os.remove(temp + "/" + tile.name + ".pickle")
 
 
 @dask.delayed
@@ -53,12 +65,12 @@ def process_serialized_tiles(serialized_data, temp):
     return delayed_tasks
 
 
-def process_several_clouds(files, pipeline, output, temp, buffer=None, remove_buffer=None, dry_run=None):
+def process_several_clouds(files, pipeline, output, temp, buffer=None, dry_run=None):
     delayed_tasks = []
 
     for file in files:
         c = Cloud(file)
-        t = Tile(c, c.bounds, pipeline, output, buffer, remove_buffer, os.path.basename(c.filepath).split(".")[0])
+        t = Tile(c, c.bounds, pipeline, output, buffer, os.path.basename(c.filepath).split(".")[0])
         p = t.link_pipeline(False)
 
         if not dry_run:
@@ -90,7 +102,7 @@ def cut_image_array(tiles, image_array, temp, dry_run=None):
             serialize(tile, temp)
 
         stages.pop(0)
-        results.append((array, stages, tile.name))
+        results.append((array, stages, tile))
 
     return results
 
