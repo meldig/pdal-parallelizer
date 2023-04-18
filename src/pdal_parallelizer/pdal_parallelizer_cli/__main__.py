@@ -9,7 +9,7 @@ from pdal_parallelizer import process_pipelines as process
 
 
 @click.group()
-@click.version_option('2.0.3')
+@click.version_option('2.1.0')
 def main():
     """A simple parallelization tool for 3d point clouds treatment"""
     pass
