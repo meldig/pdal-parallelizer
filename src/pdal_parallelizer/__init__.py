@@ -1,17 +1,17 @@
-import contextlib
 import json
 import logging
 import os.path
 import sys
-from math import ceil
 from os.path import join
 import numpy as np
+import matplotlib.pyplot as plt
 from distributed import progress
 from . import file_manager
 from . import do
 from .cloud import Cloud
 from dask import config as cfg
-from dask.distributed import LocalCluster, Client, performance_report
+from dask.distributed import LocalCluster, Client
+from distributed.diagnostics import MemorySampler
 
 
 def query_yes_no(question, default='no'):
@@ -68,25 +68,6 @@ def trigger_warnings(n_workers, input_type, input, output, temp, tile_size):
             if not answer:
                 return
 
-        infos = c.info
-        bounds = infos['summary']['bounds']
-        distX, distY = (
-            int(bounds['maxx'] - bounds['minx']),
-            int(bounds['maxy'] - bounds['miny'])
-        )
-
-        nTilesX = ceil(distX / tile_size[0])
-        nTilesY = ceil(distY / tile_size[0])
-
-        if nTilesX * nTilesY > n_workers:
-            answer = query_yes_no(
-                f'WARNING - With this size of tiles and this number of workers, each worker will have more than one task'
-                f' and it can blow up the distributed memory. Please choose a larger size for your tiles or increase '
-                f'your number of workers.\nDo you want to continue ?'
-            )
-            if not answer:
-                return
-
     if input_type == 'dir':
         if input == output or input == temp:
             answer = query_yes_no(
@@ -135,6 +116,7 @@ def process_pipelines(
         os.mkdir(output)
 
     client = config_dask(n_workers, threads_per_worker, timeout)
+    ms = MemorySampler()
 
     if input_type == "single":
         futures = []
@@ -159,8 +141,7 @@ def process_pipelines(
 
         print("Starting parallelization\n")
 
-        with performance_report(
-                filename="D:/data_dev/street_pointcloud_process/output/dask-report.html") if diagnostic else contextlib.nullcontext():
+        with ms.sample("Execution"):
             for (array, stages, tile_name) in data:
                 if len(array) > 0:
                     big_future = client.scatter(array)
@@ -192,16 +173,21 @@ def process_pipelines(
 
         print("Starting parallelization.\n")
 
-        with performance_report(
-                filename="D:/data_dev/street_pointcloud_process/output/dask-report.html") if diagnostic else contextlib.nullcontext():
+        with ms.sample("Execution"):
             future = client.persist(tasks)
             progress(future)
+
+    if diagnostic:
+        ms.plot()
+        plt.savefig(output + "/diagnostic.png")
 
 
 if __name__ == '__main__':
     process_pipelines(
         config="D:\\data_dev\\pdal-parallelizer\\config.json",
-        input_type="dir",
+        input_type="single",
+        tile_size=(35, 35),
         timeout=500,
-        n_workers=6
+        n_workers=6,
+        diagnostic=True
     )
