@@ -3,6 +3,6 @@ pdal==3.2.3
 dask==2023.4.0
 distributed==2023.4.0
 twine==4.0.2
-pandas==1.5.3
+pandas==2.0.1
 matplotlib==3.7.1
 pyproj==3.5.0
